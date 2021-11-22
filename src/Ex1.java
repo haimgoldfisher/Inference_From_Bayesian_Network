@@ -1,5 +1,6 @@
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Ex1 {
     /**
@@ -22,7 +23,7 @@ public class Ex1 {
             if (currLine.endsWith(".xml"))
                 xmlPath = currLine;
             else return; // try catch?
-            ArrayList<Node> networkVars = myXMLreader.XMLreader(xmlPath);
+            HashMap<String, Node> networkVars = myXMLreader.XMLreader(xmlPath);
             while ((currLine = txt.readLine()) != null) { // we should check id the query is valid
                 if (currLine.startsWith("P(")) // it's a Variable Elimination query
                     VariableElimination.variable_elimination(currLine, networkVars, outputTXT);
@@ -36,7 +37,7 @@ public class Ex1 {
         }
     }
 
-    public static void bayesBallWriter(String query, ArrayList<Node> vars, File output)
+    public static void bayesBallWriter(String query, HashMap<String, Node> vars, File output)
     {
         if (BayesBall.bayes_ball(query, vars))
             System.out.println("yes");

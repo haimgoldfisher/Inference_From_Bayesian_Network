@@ -1,11 +1,8 @@
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 
 public class BayesBall {
-    public static boolean bayes_ball(String query, ArrayList<Node> vars)
+    public static boolean bayes_ball(String query, HashMap<String, Node> vars)
     {
         String[] first = query.split("\\|");
         System.out.println(Arrays.toString(first));
@@ -16,13 +13,13 @@ public class BayesBall {
         return independence(ind[0], ind[1], given, vars);
     }
 
-    private static boolean independence(String source, String destination, String[] given, ArrayList<Node> vars)
+    private static boolean independence(String source, String destination, String[] given, HashMap<String,Node> vars)
     {
         String[] givenDiv = new String[0];
         for (String s : given) {
             givenDiv = s.split("=");
-            if (myXMLreader.searchNode(vars, givenDiv[0]) != null) {
-                    myXMLreader.searchNode(vars, givenDiv[0]).outcomeSearch(givenDiv[1]);
+            if (vars.get(givenDiv[0]) != null) {
+                    vars.get(givenDiv[0]).outcomeSearch(givenDiv[1]);
                 }
             }
         return true;

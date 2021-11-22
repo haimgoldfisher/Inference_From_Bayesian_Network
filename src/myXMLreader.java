@@ -3,14 +3,13 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
 
 
 public class myXMLreader {
 
-    public static ArrayList<Node> XMLreader(String path) throws FileNotFoundException, IOException
+    public static HashMap<String, Node> XMLreader(String path) throws FileNotFoundException, IOException
     {
         BufferedReader reader = new BufferedReader(new FileReader(path));
         String currLine; // for each line of the XML file
@@ -18,7 +17,7 @@ public class myXMLreader {
             throw new IllegalArgumentException(); // the first line must be in format
         }
         ArrayList <Node> vars = new ArrayList<Node>();
-        //HashMap<String, Node> varsMap = new HashMap<String, Node>(); instead of arrayList (O(1))
+        HashMap<String, Node> varsMap = new HashMap<String, Node>();
         String toAdd = "";
         int start, end;
         start = end = 0;
@@ -31,7 +30,8 @@ public class myXMLreader {
                         end = currLine.length() - 7; // without </NAME>
                         toAdd = currLine.substring(start, end);
                         newNode.key = toAdd; // update the name of the node
-                        vars.add(newNode);
+                        varsMap.put(toAdd, newNode);
+//                        vars.add(newNode);
                     }
                     if (currLine.startsWith("\t<OUTCOME>")) {
                         start = 10; // without <OUTCOME>
@@ -50,13 +50,15 @@ public class myXMLreader {
                         start = 6;
                         end = currLine.length() - 6;
                         name = currLine.substring(start, end); // update the name of the node
-                        currNode = searchNode(vars, name);
+//                        currNode = searchNode(vars, name);
+                        currNode = varsMap.get(name);
                     }
                     if (currLine.startsWith("\t<GIVEN>")) {
                         start = 8;
                         end = currLine.length() - 8;
                         toAdd = currLine.substring(start, end);
-                        Node parent = searchNode(vars, toAdd); // catch the parent
+//                        Node parent = searchNode(vars, toAdd); // catch the parent
+                        Node parent = varsMap.get(toAdd);
                         if (parent != null)
                             parent.next.add(currNode); // and add the curr node as his child
                         if (currNode != null)
@@ -73,21 +75,21 @@ public class myXMLreader {
             }
             if (currLine.contains("</NETWORK>")) { // must be the last line of the XML
                 reader.close();
-                return vars;
+                return varsMap;
             }
         }
         //reader.close();
         throw new IOException(); // if the last row isn't "</NETWORK>"
     }
 
-    public static Node searchNode(ArrayList<Node> vars, String name)
-    { // a simple function to search a node in a variables array list - by its name
-        for (Node var : vars) {
-            if (var.key.equals(name))
-                return var;
-        }
-        return null; // if didn't find the desired node's name - return null
-    }
+//    public static Node searchNode(ArrayList<Node> vars, String name)
+//    { // a simple function to search a node in a variables array list - by its name
+//        for (Node var : vars) {
+//            if (var.key.equals(name))
+//                return var;
+//        }
+//        return null; // if didn't find the desired node's name - return null
+//    }
 
     private static void addTableValues(Node currNode, String toAdd)
     { // a simple inner function to add the table values into the node's table
@@ -97,8 +99,8 @@ public class myXMLreader {
     }
 
     public static void main(String[] args) throws IOException {
-        ArrayList <Node> vars = XMLreader("src/alarm_net.xml");
-        System.out.println(searchNode(vars, "M").next.size());
+        HashMap<String, Node> vars = XMLreader("src/alarm_net.xml");
+        //System.out.println(searchNode(vars, "M").next.size());
         //System.out.println(searchNode(vars, "A").next.get(1).key);
     }
 }
