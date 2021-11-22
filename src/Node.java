@@ -49,4 +49,13 @@ public class Node {
         }
         return null;
     }
+
+    public String outcomeSearch(String str)
+    {
+        for (String s : this.outcome) {
+            if (s.equals(str))
+                return s;
+        }
+        return str;
+    }
 }

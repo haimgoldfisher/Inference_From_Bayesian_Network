@@ -4,6 +4,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Objects;
 
 
@@ -12,12 +13,12 @@ public class myXMLreader {
     public static ArrayList<Node> XMLreader(String path) throws FileNotFoundException, IOException
     {
         BufferedReader reader = new BufferedReader(new FileReader(path));
-        String currLine;
+        String currLine; // for each line of the XML file
         if (!Objects.equals(currLine = reader.readLine(), "<NETWORK>")) {
             throw new IllegalArgumentException(); // the first line must be in format
         }
-        Graph myGraph = new Graph();
         ArrayList <Node> vars = new ArrayList<Node>();
+        //HashMap<String, Node> varsMap = new HashMap<String, Node>(); instead of arrayList (O(1))
         String toAdd = "";
         int start, end;
         start = end = 0;
@@ -70,19 +71,22 @@ public class myXMLreader {
                     currLine = reader.readLine(); // move to the next line
                 }
             }
-            if (currLine.contains("</NETWORK>")) // must be the last line of the XML
+            if (currLine.contains("</NETWORK>")) { // must be the last line of the XML
+                reader.close();
                 return vars;
+            }
         }
-        throw new IOException(); // if the last row is'nt "</NETWORK>"
+        //reader.close();
+        throw new IOException(); // if the last row isn't "</NETWORK>"
     }
 
-    private static Node searchNode(ArrayList<Node> vars, String name)
-    {
+    public static Node searchNode(ArrayList<Node> vars, String name)
+    { // a simple function to search a node in a variables array list - by its name
         for (Node var : vars) {
             if (var.key.equals(name))
                 return var;
         }
-        return null;
+        return null; // if didn't find the desired node's name - return null
     }
 
     private static void addTableValues(Node currNode, String toAdd)

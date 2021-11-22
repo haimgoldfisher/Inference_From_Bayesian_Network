@@ -1,4 +1,5 @@
 import java.io.*;
+import java.util.ArrayList;
 
 public class Ex1 {
     /**
@@ -21,18 +22,26 @@ public class Ex1 {
             if (currLine.endsWith(".xml"))
                 xmlPath = currLine;
             else return; // try catch?
-            File xml = new File(xmlPath);
+            ArrayList<Node> networkVars = myXMLreader.XMLreader(xmlPath);
             while ((currLine = txt.readLine()) != null) { // we should check id the query is valid
-                if (currLine.startsWith("P("))
-                    VariableElimination.variable_elimination(currLine, xml, outputTXT); // it's a Variable Elimination query
-                else
-                    BayesBall.bayes_ball(currLine, xml, outputTXT); // it's a Bayes Ball query
+                if (currLine.startsWith("P(")) // it's a Variable Elimination query
+                    VariableElimination.variable_elimination(currLine, networkVars, outputTXT);
+                else // it's a Bayes Ball query
+                    bayesBallWriter(currLine, networkVars, outputTXT);
             }
             txt.close();
         }
         catch (IOException e) { // or FileNotFoundException
             e.printStackTrace();
         }
+    }
+
+    public static void bayesBallWriter(String query, ArrayList<Node> vars, File output)
+    {
+        if (BayesBall.bayes_ball(query, vars))
+            System.out.println("yes");
+        else
+            System.out.println("no");
     }
 
     private static File createFile()
