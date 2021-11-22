@@ -25,7 +25,7 @@ public class BayesBall {
                     myXMLreader.searchNode(vars, givenDiv[0]).outcomeSearch(givenDiv[1]);
                 }
             }
-        }
+        return true;
     }
 
     public static void main(String[] args) {
