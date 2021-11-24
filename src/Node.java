@@ -1,12 +1,9 @@
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.Objects;
-import java.util.Queue;
+import java.util.*;
 
 public class Node {
-    final int UNEXPLORED = 0, EXPLORED = 1;
+    final int UNCOLORED = 0, COLORED = 1;
     String key; // the name of the node
-    int visit; // color - it checks if we already checked this node at searching
+    int color; // color - it checks if we already checked this node at searching
 //  double[][] of P(X) values
     ArrayList<Node> parents; // a pointer to the parent of the node
     ArrayList<Node> next; // array list of the children of the node
@@ -16,38 +13,68 @@ public class Node {
     public Node(String key)
     {
         this.key = key;
-        this.visit = 0;
+        this.color = UNCOLORED;
         this.parents = new ArrayList<Node>();
         this.next = new ArrayList<Node>();
         this.outcome = new ArrayList<String>();
         this.table = new ArrayList<Double>();
     }
-    public void addNode(String key)
+    public Node addNode(String key)
     {
         Node n = new Node(key);
         this.next.add(n);
         n.parents.add(this);
+        return n;
     }
 
-    public String bfs(String toFind)
+    public Node bfs(String toFind)
     {
         Queue<Node> Q = new LinkedList<Node>(); // bfs algo works on queue
         Node v = null;
-        this.visit = EXPLORED;
+        this.color = COLORED;
         Q.add(this);
         while (!Q.isEmpty()) {
             v = Q.peek();
             if (Objects.equals(v.key, toFind))
-                return v.key;
-            for (Node target : v.next) { // all the nodes that this node is their parent
-                if (target.visit == UNEXPLORED) { // since we check only unexplored nodes
-                    target.visit = EXPLORED;
-                    Q.add(target);
+                return v;
+            if (v.hasChild())
+                for (Node target : v.next) { // all the nodes that this node is their parent
+                    if (target.color == UNCOLORED) { // since we check only unexplored nodes
+                        target.color = COLORED;
+                        Q.add(target);
+                    }
                 }
-            }
             Q.remove();
         }
         return null;
+    }
+
+    public Node dfs(String toFind)
+    {
+        Stack<Node> S = new Stack<Node>();
+        Node v = null;
+        S.push(this);
+        while (!S.isEmpty()){
+            v = S.pop();
+            if (v.key.equals(toFind))
+                return v;
+            if (v.color != COLORED){
+                v.color = COLORED;
+                for (Node w : v.next)
+                    S.push(w);
+            }
+        }
+        return null;
+    }
+
+    private boolean hasParent()
+    {
+        return this.parents.size() > 0;
+    }
+
+    private boolean hasChild()
+    {
+        return this.next.size() > 0;
     }
 
     public String outcomeSearch(String str)

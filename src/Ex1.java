@@ -1,5 +1,4 @@
 import java.io.*;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Ex1 {
@@ -23,8 +22,9 @@ public class Ex1 {
             if (currLine.endsWith(".xml"))
                 xmlPath = currLine;
             else return; // try catch?
+// since the name of each variable is unique, we can add each node to an hashmap of our graph nodes
             HashMap<String, Node> networkVars = myXMLreader.XMLreader(xmlPath);
-            while ((currLine = txt.readLine()) != null) { // we should check id the query is valid
+            while ((currLine = txt.readLine()) != null) { // we should check if the query is valid
                 if (currLine.startsWith("P(")) // it's a Variable Elimination query
                     VariableElimination.variable_elimination(currLine, networkVars, outputTXT);
                 else // it's a Bayes Ball query

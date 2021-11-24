@@ -4,6 +4,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 
@@ -102,5 +103,7 @@ public class myXMLreader {
         HashMap<String, Node> vars = XMLreader("src/alarm_net.xml");
         //System.out.println(searchNode(vars, "M").next.size());
         //System.out.println(searchNode(vars, "A").next.get(1).key);
+        for (Map.Entry<String, Node> a : vars.entrySet())
+            System.out.println(a.getValue());
     }
 }
