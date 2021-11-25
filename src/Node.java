@@ -15,10 +15,10 @@ public class Node {
     public Node(String key)
     {
         this.key = key;
-        this.color = UNCOLORED;
-        this.visit = UNVISITED;
+        this.color = UNCOLORED; // for evidence
+        this.visit = UNVISITED; // for search
         this.parents = new ArrayList<Node>();
-        this.next = new ArrayList<Node>();
+        this.next = new ArrayList<Node>(); // children
         this.outcome = new ArrayList<String>();
         this.table = new ArrayList<Double>();
     }
@@ -52,49 +52,6 @@ public class Node {
         return null;
     }
 
-    public Node INDsearch(String target, HashMap<String,Node> vars){
-        Queue<Node> toVisit = new LinkedList<Node>();
-        Node v = this;
-        this.visit = VISIT_FROM_CHILD;
-        toVisit.add(v);
-        while (!toVisit.isEmpty()){
-            v = toVisit.remove();
-            if (Objects.equals(v.key, target))
-                return vars.get(target);
-            if (v.color == UNCOLORED && v.visit == VISIT_FROM_CHILD){
-                if (v.hasChild())
-                    for (Node child : v.next)
-                        if (child.visit == UNVISITED) {
-                            child.visit = VISIT_FROM_PARENT;
-                            toVisit.add(child);
-                        }
-                if (v.hasParent())
-                    for (Node parent : v.parents)
-                        if (parent.visit == UNVISITED){
-                            parent.visit = VISIT_FROM_CHILD;
-                            toVisit.add(parent);
-                        }
-            }
-            else if (v.color == UNCOLORED && v.visit == VISIT_FROM_PARENT){
-                if (v.hasChild())
-                    for (Node child : v.next)
-                        if (child.visit != VISIT_FROM_PARENT) {
-                            child.visit = VISIT_FROM_PARENT;
-                            toVisit.add(child);
-                        }
-            }
-            else if (v.color == COLORED && v.visit == VISIT_FROM_PARENT){
-                if (v.hasParent())
-                    for (Node parent : v.parents)
-                        if (parent.visit != VISIT_FROM_CHILD){
-                            parent.visit = VISIT_FROM_CHILD;
-                            toVisit.add(parent);
-                        }
-            }
-        }
-        return null;
-    }
-
     public Node dfs(String toFind)
     {
         Stack<Node> S = new Stack<Node>();
@@ -113,12 +70,12 @@ public class Node {
         return null;
     }
 
-    private boolean hasParent()
+    boolean hasParent()
     {
         return this.parents.size() > 0;
     }
 
-    private boolean hasChild()
+    boolean hasChild()
     {
         return this.next.size() > 0;
     }

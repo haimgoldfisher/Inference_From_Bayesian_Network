@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class tester {
 
     @Test
-    void BFS_DFS_ClearColors_Test()
+    void BFS_DFS_Reset_Vars_Test()
     {
         Node a = new Node("A");
         Node b = new Node("B");
@@ -67,5 +67,4 @@ public class tester {
         assertTrue(BayesBall.bayes_ball(q9, bigNet));
         assertFalse(BayesBall.bayes_ball(q10, bigNet));
     }
-
 }
