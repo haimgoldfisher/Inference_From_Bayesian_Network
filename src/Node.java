@@ -1,9 +1,11 @@
 import java.util.*;
 
 public class Node {
-    final int UNCOLORED = 0, COLORED = 1;
+    final static int UNCOLORED = 0, COLORED = 1;
+    final static int UNVISITED = 0, VISIT_FROM_CHILD = 1, VISIT_FROM_PARENT = 2;
     String key; // the name of the node
     int color; // color - it checks if we already checked this node at searching
+    int visit; //
 //  double[][] of P(X) values
     ArrayList<Node> parents; // a pointer to the parent of the node
     ArrayList<Node> next; // array list of the children of the node
@@ -14,6 +16,7 @@ public class Node {
     {
         this.key = key;
         this.color = UNCOLORED;
+        this.visit = UNVISITED;
         this.parents = new ArrayList<Node>();
         this.next = new ArrayList<Node>();
         this.outcome = new ArrayList<String>();
@@ -45,6 +48,49 @@ public class Node {
                     }
                 }
             Q.remove();
+        }
+        return null;
+    }
+
+    public Node INDsearch(String target, HashMap<String,Node> vars){
+        Queue<Node> toVisit = new LinkedList<Node>();
+        Node v = this;
+        this.visit = VISIT_FROM_CHILD;
+        toVisit.add(v);
+        while (!toVisit.isEmpty()){
+            v = toVisit.remove();
+            if (Objects.equals(v.key, target))
+                return vars.get(target);
+            if (v.color == UNCOLORED && v.visit == VISIT_FROM_CHILD){
+                if (v.hasChild())
+                    for (Node child : v.next)
+                        if (child.visit == UNVISITED) {
+                            child.visit = VISIT_FROM_PARENT;
+                            toVisit.add(child);
+                        }
+                if (v.hasParent())
+                    for (Node parent : v.parents)
+                        if (parent.visit == UNVISITED){
+                            parent.visit = VISIT_FROM_CHILD;
+                            toVisit.add(parent);
+                        }
+            }
+            else if (v.color == UNCOLORED && v.visit == VISIT_FROM_PARENT){
+                if (v.hasChild())
+                    for (Node child : v.next)
+                        if (child.visit != VISIT_FROM_PARENT) {
+                            child.visit = VISIT_FROM_PARENT;
+                            toVisit.add(child);
+                        }
+            }
+            else if (v.color == COLORED && v.visit == VISIT_FROM_PARENT){
+                if (v.hasParent())
+                    for (Node parent : v.parents)
+                        if (parent.visit != VISIT_FROM_CHILD){
+                            parent.visit = VISIT_FROM_CHILD;
+                            toVisit.add(parent);
+                        }
+            }
         }
         return null;
     }

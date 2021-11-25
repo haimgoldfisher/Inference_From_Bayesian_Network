@@ -29,15 +29,15 @@ public class tester {
         network.put("A",a);network.put("B",b);network.put("C",c);
         network.put("D",d);network.put("E",e);network.put("F",f);
         assertEquals(a.bfs("E"), e); // should find "E"
-        BayesBall.clearColors(network);
+        BayesBall.resetVars(network);
         assertNotEquals(b.bfs("F"), f); // should return NULL
-        BayesBall.clearColors(network);
+        BayesBall.resetVars(network);
         assertEquals(f.dfs("G"), g); // should find "G"
-        BayesBall.clearColors(network);
+        BayesBall.resetVars(network);
         assertNotEquals(b.dfs("F"), f); // should return NULL
-        BayesBall.clearColors(network);
+        BayesBall.resetVars(network);
         assertEquals(f.dfs("G"), g); // should find "G"
-        BayesBall.clearColors(network);
+        BayesBall.resetVars(network);
     }
 
 }
