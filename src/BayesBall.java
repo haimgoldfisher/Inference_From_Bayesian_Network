@@ -5,7 +5,7 @@ public class BayesBall {
     public static boolean bayes_ball(String query, HashMap<String, Node> vars)
     {
         String[] first = query.split("\\|"); // split the query from the given nodes
-        System.out.println(Arrays.toString(first));
+        //System.out.println(Arrays.toString(first));
         String[] ind = first[0].split("-"); // first the two elements of the query
         String[] given = new String[0];
         if (first.length > 1) // else, we have no given nodes in this query
