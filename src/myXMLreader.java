@@ -73,6 +73,8 @@ public class myXMLreader {
                     }
                     currLine = reader.readLine(); // move to the next line
                 }
+                if (currNode != null)
+                    currNode.parents = reverseGiven(currNode.parents); // for the CPT
             }
             if (currLine.contains("</NETWORK>")) { // must be the last line of the XML
                 reader.close();
@@ -83,14 +85,13 @@ public class myXMLreader {
         throw new IOException(); // if the last row isn't "</NETWORK>"
     }
 
-//    public static Node searchNode(ArrayList<Node> vars, String name)
-//    { // a simple function to search a node in a variables array list - by its name
-//        for (Node var : vars) {
-//            if (var.key.equals(name))
-//                return var;
-//        }
-//        return null; // if didn't find the desired node's name - return null
-//    }
+    private static ArrayList<Node> reverseGiven(ArrayList<Node> parents)
+    { // a simple func to reverse the order of the parents array (for CPT)
+        ArrayList<Node> res = new ArrayList<Node>();
+        for (int i = parents.size()-1; i > -1; i--)
+            res.add(parents.get(i));
+        return res;
+    }
 
     private static void addTableValues(Node currNode, String toAdd)
     { // a simple inner function to add the table values into the node's table

@@ -15,9 +15,12 @@ public class VariableElimination {
         if (queryStr.length > 1) // else, we have no given nodes in this query
             given = first[1].split(",");
         BayesBall.markEvidences(given, vars);
-        // eliminate from bayes ball unnessesery nodes
-        // create a list of CPT elemnts
-
+        // eliminate by using bayes ball unnecessary nodes (dont clear color until create the list)
+        // create a list of CPT elements
+        // sort the list -> from smallest to biggest (if equals - sort by ASCII value of the key)
+        // Elinite / Join until find the answer!!!
+        // for each eliminate ADD++, for each join MUL++
+        // update the answer
         return Math.round(ans*100000.0)/100000.0+","+addOpers+","+mulOpers;
     }
 

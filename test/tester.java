@@ -83,13 +83,19 @@ public class tester {
     void CPT_Test()
     {
         alarm.get("A").cpt = new CPT(alarm.get("A"));
-//        alarm.get("B").cpt = new CPT(alarm.get("B"));
-//        System.out.println(alarm.get("B").table);
-//        System.out.println(alarm.get("B").cpt.varsNames);
-//        System.out.println(alarm.get("B").cpt.tableRows);
+        alarm.get("B").cpt = new CPT(alarm.get("B"));
+        System.out.println(alarm.get("B").table);
+        System.out.println(alarm.get("B").cpt.varsNames);
+        System.out.println(alarm.get("B").cpt.tableRows);
+        System.out.println();
         System.out.println(alarm.get("A").table);
         System.out.println(alarm.get("A").cpt.varsNames);
         System.out.println(alarm.get("A").cpt.tableRows);
+        System.out.println();
+//        bigNet.get("C1").cpt = new CPT(bigNet.get("C1"));
+//        System.out.println(bigNet.get("C1").table);
+//        System.out.println(bigNet.get("C1").cpt.varsNames);
+//        System.out.println(bigNet.get("C1").cpt.tableRows);
     }
 
     @Test

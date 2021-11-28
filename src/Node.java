@@ -23,8 +23,8 @@ public class Node {
         this.outcome = new ArrayList<String>();
         this.table = new ArrayList<Double>();
         this.cpt = new CPT(this);
-
     }
+
     public Node addNode(String key)
     {
         Node n = new Node(key);

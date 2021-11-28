@@ -49,7 +49,7 @@ public class CPT {
             ArrayList<String> combination = new ArrayList<String>(cols);
             int j = 1;
             for(ArrayList<String> sub : myOutcomesSets) {
-                combination.add(sub.get((i/j)%sub.size()));
+                combination.add(sub.get((i / j) % sub.size()));
                 j *= sub.size();
             }
             allCombinations.add(combination);
