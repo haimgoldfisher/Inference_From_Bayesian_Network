@@ -11,6 +11,7 @@ public class Node {
     ArrayList<Node> next; // array list of the children of the node
     ArrayList<String> outcome;
     ArrayList<Double> table;
+    CPT cpt;
 
     public Node(String key)
     {
@@ -21,6 +22,8 @@ public class Node {
         this.next = new ArrayList<Node>(); // children
         this.outcome = new ArrayList<String>();
         this.table = new ArrayList<Double>();
+        this.cpt = new CPT(this);
+
     }
     public Node addNode(String key)
     {

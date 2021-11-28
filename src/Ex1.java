@@ -5,12 +5,14 @@ public class Ex1 {
     /**
      *  Main Class
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         String strFromUser = ""; // scanner???
-        File output = createFile(); // maybe the name of the output must be familiar with the input
+        //File output = createFile(); // maybe the name of the output must be familiar with the input
+        BufferedWriter output = new BufferedWriter(new FileWriter("output"));
         readTXT(strFromUser, output);
+        output.close();
     }
-    private static void readTXT(String strFromUser, File outputTXT)
+    private static void readTXT(String strFromUser, BufferedWriter outputTXT)
     {
         try {
             BufferedReader txt = new BufferedReader(new FileReader(strFromUser));
@@ -26,7 +28,7 @@ public class Ex1 {
             HashMap<String, Node> networkVars = myXMLreader.XMLreader(xmlPath);
             while ((currLine = txt.readLine()) != null) { // we should check if the query is valid
                 if (currLine.startsWith("P(")) // it's a Variable Elimination query
-                    VariableElimination.variable_elimination(currLine, networkVars, outputTXT);
+                    variableEliminationWriter(currLine, networkVars, outputTXT);
                 else // it's a Bayes Ball query
                     bayesBallWriter(currLine, networkVars, outputTXT);
             }
@@ -37,12 +39,17 @@ public class Ex1 {
         }
     }
 
-    public static void bayesBallWriter(String query, HashMap<String, Node> vars, File output)
+    public static void variableEliminationWriter(String query, HashMap<String, Node> vars, BufferedWriter output) throws IOException
+    {
+        output.write(VariableElimination.variable_elimination(query, vars));
+    }
+
+    public static void bayesBallWriter(String query, HashMap<String, Node> vars, BufferedWriter output) throws IOException
     {
         if (BayesBall.bayes_ball(query, vars))
-            System.out.println("yes");
+            output.write("yes\n");
         else
-            System.out.println("no");
+            output.write("no\n");
     }
 
     private static File createFile()

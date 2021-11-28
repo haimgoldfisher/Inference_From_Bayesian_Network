@@ -80,7 +80,7 @@ public class BayesBall {
         return null; // the Algo couldn't reach the node - return NULL
     }
 
-    private static void markEvidences(String[] given, HashMap<String,Node> vars)
+    public static void markEvidences(String[] given, HashMap<String,Node> vars)
     {
         String[] givenDiv = new String[0];
         for (String s : given) {

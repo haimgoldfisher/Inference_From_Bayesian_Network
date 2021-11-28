@@ -6,6 +6,19 @@ import java.util.HashMap;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class tester {
+    HashMap<String,Node> alarm = myXMLreader.XMLreader("src/alarm_net.xml");
+    HashMap<String,Node> bigNet = myXMLreader.XMLreader("src/big_net.xml");
+
+    public tester() throws IOException {
+    }
+
+    @Test
+    void ReadXML_Test()
+    {
+        System.out.println(alarm.get("A").table.size());
+        System.out.println(alarm.get("B").table.size());
+    }
+
 
     @Test
     void BFS_DFS_Reset_Vars_Test()
@@ -43,13 +56,11 @@ public class tester {
         String basic_c3 = "E-M|A=T"; // yes
         String q1 = "B-E|"; // yes
         String q2 = "B-E|J=T"; // no
-        HashMap<String,Node> alarm = myXMLreader.XMLreader("src/alarm_net.xml");
         assertFalse(BayesBall.bayes_ball(basic_c1, alarm));
         assertTrue(BayesBall.bayes_ball(basic_c2, alarm));
         assertTrue(BayesBall.bayes_ball(basic_c3, alarm));
         assertTrue(BayesBall.bayes_ball(q1, alarm));
         assertFalse(BayesBall.bayes_ball(q2, alarm));
-        HashMap<String,Node> bigNet = myXMLreader.XMLreader("src/big_net.xml");
         String q3 = "A2-B3|C3=T,B2=F,C2=v3"; // yes
         String q4 = "A2-D1|C3=T,B2=F,C2=v3"; // no
         String q5 = "A2-C1|C3=T,B2=F,C2=v3"; // no
@@ -66,5 +77,44 @@ public class tester {
         assertTrue(BayesBall.bayes_ball(q8, bigNet));
         assertTrue(BayesBall.bayes_ball(q9, bigNet));
         assertFalse(BayesBall.bayes_ball(q10, bigNet));
+    }
+
+    @Test
+    void CPT_Test()
+    {
+        alarm.get("A").cpt = new CPT(alarm.get("A"));
+//        alarm.get("B").cpt = new CPT(alarm.get("B"));
+//        System.out.println(alarm.get("B").table);
+//        System.out.println(alarm.get("B").cpt.varsNames);
+//        System.out.println(alarm.get("B").cpt.tableRows);
+        System.out.println(alarm.get("A").table);
+        System.out.println(alarm.get("A").cpt.varsNames);
+        System.out.println(alarm.get("A").cpt.tableRows);
+    }
+
+    @Test
+    void Variable_Elimination_Test()
+    {
+        String q1 = "P(B=T|J=T,M=T) A-E";
+        String q2 = "P(B=T|J=T,M=T) E-A";
+        String q3 = "P(J=T|B=T) A-E-M";
+        String q4 = "P(J=T|B=T) M-E-A";
+
+        assertEquals(VariableElimination.variable_elimination(q1, alarm), "0.28417,7,16");
+        assertEquals(VariableElimination.variable_elimination(q2, alarm), "0.28417,7,16");
+        assertEquals(VariableElimination.variable_elimination(q3, alarm), "0.84902,7,12");
+        assertEquals(VariableElimination.variable_elimination(q4, alarm), "0.84902,5,8");
+
+        String q5 = "P(A2=T|) D1-B3-C1-B0-A1-B1-A3-C3-B2-C2";
+        String q6 = "P(B0=v3|C3=T,B2=F,C2=v3) A2-D1-B3-C1-A1-B1-A3";
+        String q7 = "P(A2=T|C2=v1) D1-C1-B0-A1-B1-A3-C3-B2-B3";
+        String q8 = "P(D1=T|C2=v1,C3=F) A2-C1-B0-A1-B1-A3-B2-B3";
+        String q9 = "P(D1=T|C2=v1,C3=F) A2-C1-B0-A1-B1-A3-B2-B3";
+
+        assertEquals(VariableElimination.variable_elimination(q5, bigNet), "0.09,0,0");
+        assertEquals(VariableElimination.variable_elimination(q6, bigNet), "0.42307,10,21");
+        assertEquals(VariableElimination.variable_elimination(q7, bigNet), "0.0936,9,18");
+        assertEquals(VariableElimination.variable_elimination(q8, bigNet), "0.37687,83,168");
+        assertEquals(VariableElimination.variable_elimination(q9, bigNet), "0.37687,83,168");
     }
 }
