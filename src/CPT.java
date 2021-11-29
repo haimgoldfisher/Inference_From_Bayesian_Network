@@ -66,55 +66,6 @@ public class CPT {
         return allKeys;
     }
 
-    public CPT join(CPT f, int mulOper, HashMap<String, Node> vars) // this = the smaller, f = the bigger
-    {
-        LinkedList<String> unique = new LinkedList<String>(); // an array with the unique vars
-        LinkedHashMap<ArrayList<String>, Float> resTable = new LinkedHashMap<ArrayList<String>, Float>();
-        LinkedList<String> resVars = new LinkedList<String>();
-        for (String var : this.varsNames)
-            for (String var_ot : f.varsNames)
-                if (var.equals(var_ot))
-                    unique.add(var);
-        int sourceVarTarget = 0;
-        int destVarTarget = 0;
-        if (!unique.isEmpty()) { // no column(s) adding
-            for (String var : unique)
-                for (String outcome : vars.get(var).outcome) {
-                    for (ArrayList<String> key : f.tableRows.keySet()) {
-                        key.add(outcome);
-                }
-            }
-        }
-        resTable.putAll(f.tableRows);
-        resVars.addAll(f.varsNames);
-        for (String src: this.varsNames) {
-            for (String dst: f.varsNames){
-                if (src.equals(dst)){
-                    joinBy(sourceVarTarget, destVarTarget, resTable, f, mulOper);
-                }
-                destVarTarget++;
-            }
-            sourceVarTarget++;
-        }
-        return new CPT(resTable, resVars); // the result factor
-    }
-
-    private void joinBy(int sourceVarTarget, int destVarTarget, LinkedHashMap<ArrayList<String>, Float> resTable, CPT f, int mulOper)
-    {
-        for (Map.Entry<ArrayList<String>, Float> row_src : this.tableRows.entrySet()) {
-            ArrayList<String> key_src = row_src.getKey();
-            for (Map.Entry<ArrayList<String>, Float> row_dst : f.tableRows.entrySet()) {
-                ArrayList<String> key_dst = row_dst.getKey();
-                if (Objects.equals(key_src.get(sourceVarTarget), key_dst.get(destVarTarget))) {
-                    float x = row_src.getValue();
-                    float y = row_dst.getValue();
-                    resTable.put(key_dst, x*y);
-                    mulOper++;
-                }
-            }
-        }
-    }
-
     public void eliminate(String toEliminate, int additionOper) {
         int eliminateCol = 0;
         for (String name : this.varsNames)
@@ -176,20 +127,84 @@ public class CPT {
         this.tableRows = resTable; // update the rows of the new factor
     }
 
-    public static void main(String[] args) throws IOException {
-        String q = "P(B=T|J=T,M=T) A-E";
-        HashMap<String, Node> alarm = myXMLreader.XMLreader("src/alarm_net.xml");
-        alarm.get("A").cpt = new CPT(alarm.get("A"));
-        System.out.println(alarm.get("A").cpt.varsNames);
-        System.out.println(alarm.get("A").cpt.tableRows.keySet());
-        alarm.get("A").cpt.eliminate("B", 0);
-        System.out.println(alarm.get("A").cpt.varsNames);
-        System.out.println(alarm.get("A").cpt.tableRows.keySet());
-        int same = 0;
-        System.out.println(alarm.get("A").cpt.tableRows.entrySet());
-        for (Map.Entry<ArrayList<String>, Float> a : alarm.get("A").cpt.tableRows.entrySet()) {
-            System.out.println(a.getKey());
-            System.out.println(a.getValue());
+    public CPT join(CPT f, int mulOper, HashMap<String, Node> vars) // this = the smaller, f = the bigger
+    {
+        LinkedHashMap<ArrayList<String>, Float> resTable = new LinkedHashMap<ArrayList<String>, Float>();
+        LinkedList<String> resVars = new LinkedList<String>();
+        // the first is the smaller
+        int counter = 0;
+        for (String name : this.varsNames)
+            for (String name_ot : f.varsNames)
+                if (name.equals(name_ot))
+                    counter++;
+        if (this.varsNames.size() == counter) { // no unique vars
+            int sourceVarTarget = 0;
+            int destVarTarget = 0;
+            resTable.putAll(f.tableRows);
+            resVars.addAll(f.varsNames);
+            for (String src : this.varsNames) {
+                for (String dst : f.varsNames) {
+                    if (src.equals(dst)) {
+                        joinBy(sourceVarTarget, destVarTarget, resTable, f, mulOper);
+                    }
+                    destVarTarget++;
+                }
+                sourceVarTarget++;
+            }
+            return new CPT(resTable, resVars); // the result factor
+        }
+        return joinWithUnique(f, mulOper, vars); // for the other case - unique vars
+    }
+
+    private void joinBy(int sourceVarTarget, int destVarTarget, LinkedHashMap<ArrayList<String>, Float> resTable, CPT f, int mulOper)
+    {
+        for (Map.Entry<ArrayList<String>, Float> row_src : this.tableRows.entrySet()) {
+            ArrayList<String> key_src = row_src.getKey();
+            for (Map.Entry<ArrayList<String>, Float> row_dst : f.tableRows.entrySet()) {
+                ArrayList<String> key_dst = row_dst.getKey();
+                if (Objects.equals(key_src.get(sourceVarTarget), key_dst.get(destVarTarget))) {
+                    float x = row_src.getValue();
+                    float y = row_dst.getValue();
+                    resTable.put(key_dst, x*y);
+                    mulOper++;
+                }
+            }
         }
     }
+
+    private CPT joinWithUnique(CPT f, int mulOper, HashMap<String,Node> vars)
+    {
+        LinkedHashMap<ArrayList<String>,Float> resTable = new LinkedHashMap<ArrayList<String>,Float>();
+        LinkedList<String> resVars = new LinkedList<String>();
+        Node merged = new Node(f.varsNames.get(0));
+        merged.outcome = vars.get(merged.key).outcome;
+        for (String name : f.varsNames)
+            if (!Objects.equals(name, merged.key))
+                merged.parents.add(vars.get(name));
+        for (String name : this.varsNames)
+            if (!merged.parents.contains(vars.get(name)) && !Objects.equals(name, merged.key) )
+                merged.parents.add(vars.get(name));
+        resVars.add(merged.key);
+        for (Node par : merged.parents)
+            resVars.add(par.key);
+        ArrayList<ArrayList<String>> allCombinations = cartesianProd(merged);
+        for (ArrayList<String> sub : allCombinations)
+            resTable.put(sub, 0.00F); // key = the comb, value = table's value
+
+        return new CPT(resTable, resVars);
     }
+
+    public static void main(String[] args) throws IOException {
+        String q = "P(B=T|J=T,M=T) A-E";
+        HashMap<String, Node> alarm = myXMLreader.XMLreader("alarm_net.xml");
+        alarm.get("A").cpt = new CPT(alarm.get("A"));
+        System.out.println(alarm.get("A").cpt.varsNames);
+        System.out.println(alarm.get("A").cpt.tableRows);
+        alarm.get("M").cpt = new CPT(alarm.get("M"));
+        System.out.println(alarm.get("M").cpt.varsNames);
+        System.out.println(alarm.get("M").cpt.tableRows);
+        CPT f1 = alarm.get("M").cpt.join(alarm.get("A").cpt, 0, alarm);
+        System.out.println(f1.varsNames);
+        System.out.println(f1.tableRows);
+    }
+}

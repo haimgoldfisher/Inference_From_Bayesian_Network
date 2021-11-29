@@ -46,6 +46,18 @@ public class VariableElimination {
         return Math.round(ans*100000.0)/100000.0+","+addOpers+","+mulOpers;
     }
 
+    public float normalize(CPT factor, String outcome, int addOpers)
+    {
+        ArrayList<String> key = new ArrayList<String>(Collections.singleton(outcome));
+        float up = factor.tableRows.get(key);
+        float down = 0;
+        for (float val : factor.tableRows.values()) {
+            down += val;
+            addOpers++;
+        }
+        return up/down;
+    }
+
     private static void sortFactors(Vector<CPT> factors) // O(n^2) -> O(nlogn)
     {
         for (int i = 0; i < factors.size(); i++)
@@ -86,7 +98,7 @@ public class VariableElimination {
 
     public static void main(String[] args) throws IOException {
         String q = "P(B=T|J=T,M=T) A-E";
-        HashMap<String,Node> alarm = myXMLreader.XMLreader("src/alarm_net.xml");
+        HashMap<String,Node> alarm = myXMLreader.XMLreader("alarm_net.xml");
         variable_elimination(q, alarm);
     }
 }

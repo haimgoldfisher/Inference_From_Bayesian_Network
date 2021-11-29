@@ -7,8 +7,8 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class tester {
-    HashMap<String,Node> alarm = myXMLreader.XMLreader("src/alarm_net.xml");
-    HashMap<String,Node> bigNet = myXMLreader.XMLreader("src/big_net.xml");
+    HashMap<String,Node> alarm = myXMLreader.XMLreader("alarm_net.xml");
+    HashMap<String,Node> bigNet = myXMLreader.XMLreader("big_net.xml");
 
     public tester() throws IOException {
     }
@@ -101,6 +101,18 @@ public class tester {
 //        System.out.println(bigNet.get("C1").table);
 //        System.out.println(bigNet.get("C1").cpt.varsNames);
 //        System.out.println(bigNet.get("C1").cpt.tableRows);
+    }
+
+    @Test
+    void join_Test()
+    {
+        alarm.get("A").cpt = new CPT(alarm.get("A"));
+        alarm.get("E").cpt = new CPT(alarm.get("E"));
+        CPT f1 = alarm.get("A").cpt;
+        CPT f2 = alarm.get("E").cpt;
+        CPT f3 = f1.join(f2, 0, alarm);
+        //f2.join(f1, 0, alarm);
+        System.out.println(f3.tableRows);
     }
 
     @Test
