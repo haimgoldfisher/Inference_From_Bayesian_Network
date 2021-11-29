@@ -22,13 +22,14 @@ public class VariableElimination {
         Vector<CPT> factors = new Vector<CPT>();
         for (Node q : queryVariables.values()) // linked hashmap of factors
             factors.add(new CPT(queryVariables.get(q.key)));
-        sortFactors(factors);
+        sortFactors(factors); // maybe this sorting is useless at this moment cuz we will eliminate
         String toEliminate = "";
         while (!factors.isEmpty()) {
             for (CPT factor: factors)
                 for (String evidence : given)
                     factor.eliminateEvidence(evidence);
             removeFactor(factors); // remove factors with less than 2 rows
+            sortFactors(factors);
             while (listOfOrder.length > 0) {
                 toEliminate = listOfOrder[0];
             }

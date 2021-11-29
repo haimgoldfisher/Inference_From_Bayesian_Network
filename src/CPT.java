@@ -158,17 +158,22 @@ public class CPT {
         String outcome = evid[1]; // the given outcome of this variable
         int varCol = 0;
         for (String var : this.varsNames) {
-            if (var.equals(variable))
+            if (var.equals(variable)) // then we found the index of the wanted variable
                 break;
             varCol++;
         }
-        if (varCol > this.varsNames.size()) // the evidence doesn't appear in this table
-            return;
-        LinkedHashMap<ArrayList<String>, Float> res = new LinkedHashMap<ArrayList<String>, Float>();
+        if (varCol >= this.varsNames.size())
+            return; // because the evidence doesn't appear in this table
+        LinkedHashMap<ArrayList<String>, Float> resTable = new LinkedHashMap<ArrayList<String>, Float>();
         for (ArrayList<String> key : this.tableRows.keySet()) {
-            if (key.get(varCol).equals(outcome))
-                res.put(key, this.tableRows.get(key));
-
+            if (key.get(varCol).equals(outcome)) { // we will keep only rows of the evidence
+                ArrayList<String> newKey = new ArrayList<String>(key); // copy of the key
+                newKey.remove(varCol); // the key without the removed column
+                resTable.put(newKey, this.tableRows.get(key)); // the old value in the new key
+            }
+        }
+        this.varsNames.remove(varCol); // update the columns list
+        this.tableRows = resTable; // update the rows of the new factor
     }
 
     public static void main(String[] args) throws IOException {
