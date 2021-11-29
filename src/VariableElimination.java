@@ -12,7 +12,8 @@ public class VariableElimination {
         first[0] = first[0].substring(2, first[0].length()-1);
         String[] queryStr = first[0].split("\\|"); // [query | evidence]
         String[] given = new String[0];
-        String[] listOfOrder = first[1].split("-");
+        String[] hidden = first[1].split("-");
+        ArrayList<String> hiddenVars = new ArrayList<String>(Arrays.asList(hidden));
         if (queryStr.length > 1) // else, we have no given nodes in this query
             given = queryStr[1].split(",");
         BayesBall.markEvidences(given, vars);
@@ -22,16 +23,17 @@ public class VariableElimination {
         Vector<CPT> factors = new Vector<CPT>();
         for (Node q : queryVariables.values()) // linked hashmap of factors
             factors.add(new CPT(queryVariables.get(q.key)));
-        sortFactors(factors); // maybe this sorting is useless at this moment cuz we will eliminate
+        sortFactors(factors); // maybe this sorting is useless at this moment
         String toEliminate = "";
         while (!factors.isEmpty()) {
             for (CPT factor: factors)
                 for (String evidence : given)
-                    factor.eliminateEvidence(evidence);
+                    factor.eliminateEvidence(evidence); // without addition opers - only remove rows
             removeFactor(factors); // remove factors with less than 2 rows
             sortFactors(factors);
-            while (listOfOrder.length > 0) {
-                toEliminate = listOfOrder[0];
+            while (!hiddenVars.isEmpty()) {
+                toEliminate = hiddenVars.remove(0);
+
             }
         }
         // eliminate by using bayes ball unnecessary nodes (dont clear color until create the list)

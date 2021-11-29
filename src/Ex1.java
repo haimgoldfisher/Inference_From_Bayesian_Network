@@ -6,7 +6,7 @@ public class Ex1 {
      *  Main Class
      */
     public static void main(String[] args) throws IOException {
-        String strFromUser = ""; // scanner???
+        String strFromUser = "src/input.txt"; // scanner???
         //File output = createFile(); // maybe the name of the output must be familiar with the input
         BufferedWriter output = new BufferedWriter(new FileWriter("output"));
         readTXT(strFromUser, output);
@@ -18,14 +18,11 @@ public class Ex1 {
             BufferedReader txt = new BufferedReader(new FileReader(strFromUser));
             String currLine;
             String xmlPath;
-            if (txt.readLine() != null) // try catch?
-                currLine = txt.readLine(); // because we need to check if the first line is xml
-            else return;
-            if (currLine.endsWith(".xml"))
-                xmlPath = currLine;
-            else return; // try catch?
+            currLine = txt.readLine();
+            if (!currLine.endsWith(".xml"))
+                return;
 // since the name of each variable is unique, we can add each node to an hashmap of our graph nodes
-            HashMap<String, Node> networkVars = myXMLreader.XMLreader(xmlPath);
+            HashMap<String, Node> networkVars = myXMLreader.XMLreader(currLine);
             while ((currLine = txt.readLine()) != null) { // we should check if the query is valid
                 if (currLine.startsWith("P(")) {// it's a Variable Elimination query
                     variableEliminationWriter(currLine, networkVars, outputTXT);
@@ -45,7 +42,7 @@ public class Ex1 {
 
     public static void variableEliminationWriter(String query, HashMap<String, Node> vars, BufferedWriter output) throws IOException
     {
-        output.write(VariableElimination.variable_elimination(query, vars));
+        output.write(VariableElimination.variable_elimination(query, vars)+"\n");
     }
 
     public static void bayesBallWriter(String query, HashMap<String, Node> vars, BufferedWriter output) throws IOException
@@ -72,4 +69,5 @@ public class Ex1 {
         }
         return null;
     }
+
 }
