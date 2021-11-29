@@ -5,7 +5,7 @@ import java.util.*;
 public class VariableElimination {
     public static String variable_elimination(String query, HashMap<String, Node> vars)
     {
-        double ans = 0; // the final answer
+        float ans = 0; // the final answer
         int mulOpers = 0; // multiplication operations
         int addOpers = 0; // addition  operations
         String[] first = query.split(" "); // [query|evidence, hidden(order)]
@@ -25,6 +25,10 @@ public class VariableElimination {
         sortFactors(factors);
         String toEliminate = "";
         while (!factors.isEmpty()) {
+            for (CPT factor: factors)
+                for (String evidence : given)
+                    factor.eliminateEvidence(evidence);
+            removeFactor(factors); // remove factors with less than 2 rows
             while (listOfOrder.length > 0) {
                 toEliminate = listOfOrder[0];
             }
@@ -55,11 +59,9 @@ public class VariableElimination {
         int a = 0;
         int b = 0;
         for (String str : factors.get(i).varsNames)
-            if (!str.equals("Value"))
-                a += str.charAt(0);
+            a += str.charAt(0);
         for (String str : factors.get(j).varsNames)
-            if (!str.equals("Value"))
-                b += str.charAt(0);
+            b += str.charAt(0);
         if (a > b)
             swap(factors, i, j);
     }
@@ -72,6 +74,11 @@ public class VariableElimination {
         factors.get(i).tableRows = factors.get(j).tableRows;
         factors.get(j).tableRows = temp;
         factors.get(j).varsNames = temp_key;
+    }
+
+    private static void removeFactor(Vector<CPT> factors)
+    { // every factor with a size of 1 or less is being removed!
+        factors.removeIf(factor -> factor.tableRows.size() < 2);
     }
 
     public static void main(String[] args) throws IOException {

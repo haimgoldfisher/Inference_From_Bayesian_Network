@@ -17,12 +17,17 @@ public class CPT {
         fillCPT(n);
     }
 
+    public CPT(LinkedHashMap<ArrayList<String>,Float> table, LinkedList<String> vars)
+    {
+        this.tableRows = table;
+        this.varsNames = vars;
+    }
+
     private void fillCPT(Node n) // it fills the varsName & the tableRows of the CPT
     {
         this.varsNames.add(n.key); // first col = the node
         for (Node parent : n.parents)
             this.varsNames.add(parent.key); // the parents of the node
-        this.varsNames.add("Value"); // last col = the value of P(X|Y_1,...,Y_n)
         ArrayList<ArrayList<String>> allCombinations = cartesianProd(n);
         int index = 0; // since the size of node's table is equal to allCombinations size:
         for (ArrayList<String> sub : allCombinations) {
@@ -61,9 +66,53 @@ public class CPT {
         return allKeys;
     }
 
-    public CPT join(CPT f)
+    public CPT join(CPT f, int mulOper, HashMap<String, Node> vars) // this = the smaller, f = the bigger
     {
-        return this;
+        LinkedList<String> unique = new LinkedList<String>(); // an array with the unique vars
+        LinkedHashMap<ArrayList<String>, Float> resTable = new LinkedHashMap<ArrayList<String>, Float>();
+        LinkedList<String> resVars = new LinkedList<String>();
+        for (String var : this.varsNames)
+            for (String var_ot : f.varsNames)
+                if (var.equals(var_ot))
+                    unique.add(var);
+        int sourceVarTarget = 0;
+        int destVarTarget = 0;
+        if (!unique.isEmpty()) { // no column(s) adding
+            for (String var : unique)
+                for (String outcome : vars.get(var).outcome) {
+                    for (ArrayList<String> key : f.tableRows.keySet()) {
+                        key.add(outcome);
+                }
+            }
+        }
+        resTable.putAll(f.tableRows);
+        resVars.addAll(f.varsNames);
+        for (String src: this.varsNames) {
+            for (String dst: f.varsNames){
+                if (src.equals(dst)){
+                    joinBy(sourceVarTarget, destVarTarget, resTable, f, mulOper);
+                }
+                destVarTarget++;
+            }
+            sourceVarTarget++;
+        }
+        return new CPT(resTable, resVars); // the result factor
+    }
+
+    private void joinBy(int sourceVarTarget, int destVarTarget, LinkedHashMap<ArrayList<String>, Float> resTable, CPT f, int mulOper)
+    {
+        for (Map.Entry<ArrayList<String>, Float> row_src : this.tableRows.entrySet()) {
+            ArrayList<String> key_src = row_src.getKey();
+            for (Map.Entry<ArrayList<String>, Float> row_dst : f.tableRows.entrySet()) {
+                ArrayList<String> key_dst = row_dst.getKey();
+                if (Objects.equals(key_src.get(sourceVarTarget), key_dst.get(destVarTarget))) {
+                    float x = row_src.getValue();
+                    float y = row_dst.getValue();
+                    resTable.put(key_dst, x*y);
+                    mulOper++;
+                }
+            }
+        }
     }
 
     public void eliminate(String toEliminate, int additionOper) {
@@ -100,6 +149,26 @@ public class CPT {
             key.remove(eliminateCol);
         this.tableRows = copy;
         this.varsNames.remove(eliminateCol);
+    }
+
+    public void eliminateEvidence(String evidence)
+    {
+        String[] evid = evidence.split("=");
+        String variable = evid[0]; // the evidence variable
+        String outcome = evid[1]; // the given outcome of this variable
+        int varCol = 0;
+        for (String var : this.varsNames) {
+            if (var.equals(variable))
+                break;
+            varCol++;
+        }
+        if (varCol > this.varsNames.size()) // the evidence doesn't appear in this table
+            return;
+        LinkedHashMap<ArrayList<String>, Float> res = new LinkedHashMap<ArrayList<String>, Float>();
+        for (ArrayList<String> key : this.tableRows.keySet()) {
+            if (key.get(varCol).equals(outcome))
+                res.put(key, this.tableRows.get(key));
+
     }
 
     public static void main(String[] args) throws IOException {
