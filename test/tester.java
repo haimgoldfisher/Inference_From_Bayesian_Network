@@ -2,6 +2,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,6 +18,10 @@ public class tester {
     {
         System.out.println(alarm.get("A").table.size());
         System.out.println(alarm.get("B").table.size());
+        //System.out.println(searchNode(vars, "M").next.size());
+        //System.out.println(searchNode(vars, "A").next.get(1).key);
+        for (Map.Entry<String, Node> a : alarm.entrySet())
+            System.out.println(a.getValue());
     }
 
 

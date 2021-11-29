@@ -17,11 +17,8 @@ public class BayesBall {
     {
         if (given.length > 0) // else, we have no evidence nodes
             markEvidences(given, vars); // an inner function to mark all evidence nodes as colored
-        if (INDsearch(vars.get(source.key), destination.key, vars) == destination) {
-            resetVars(vars); // after running the algo, we would like to reset the color of each node
+        if (INDsearch(vars.get(source.key), destination.key, vars) == destination)
             return false;
-        }
-        resetVars(vars); // after running the algo, we would like to reset the color of each node
         return true;
     }
 

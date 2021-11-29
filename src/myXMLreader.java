@@ -96,7 +96,7 @@ public class myXMLreader {
     private static void addTableValues(Node currNode, String toAdd)
     { // a simple inner function to add the table values into the node's table
         for (String value : toAdd.split(" ")) {
-            currNode.table.add(Double.parseDouble(value)); // casting from String into double values
+            currNode.table.add(Float.parseFloat(value)); // casting from String into double values
         }
     }
 

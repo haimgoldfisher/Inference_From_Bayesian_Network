@@ -10,7 +10,7 @@ public class Node {
     ArrayList<Node> parents; // a pointer to the parent of the node
     ArrayList<Node> next; // array list of the children of the node
     ArrayList<String> outcome;
-    ArrayList<Double> table;
+    ArrayList<Float> table;
     CPT cpt;
 
     public Node(String key)
@@ -21,7 +21,7 @@ public class Node {
         this.parents = new ArrayList<Node>();
         this.next = new ArrayList<Node>(); // children
         this.outcome = new ArrayList<String>();
-        this.table = new ArrayList<Double>();
+        this.table = new ArrayList<Float>();
         this.cpt = new CPT(this);
     }
 

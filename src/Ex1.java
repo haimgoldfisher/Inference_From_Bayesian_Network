@@ -27,10 +27,14 @@ public class Ex1 {
 // since the name of each variable is unique, we can add each node to an hashmap of our graph nodes
             HashMap<String, Node> networkVars = myXMLreader.XMLreader(xmlPath);
             while ((currLine = txt.readLine()) != null) { // we should check if the query is valid
-                if (currLine.startsWith("P(")) // it's a Variable Elimination query
+                if (currLine.startsWith("P(")) {// it's a Variable Elimination query
                     variableEliminationWriter(currLine, networkVars, outputTXT);
-                else // it's a Bayes Ball query
+                    BayesBall.resetVars(networkVars); // after running the algo, reset color & visit of each node
+                }
+                else { // it's a Bayes Ball query
                     bayesBallWriter(currLine, networkVars, outputTXT);
+                    BayesBall.resetVars(networkVars); // after running the algo, reset color & visit of each node
+                }
             }
             txt.close();
         }
