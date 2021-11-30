@@ -189,9 +189,33 @@ public class CPT {
             resVars.add(par.key);
         ArrayList<ArrayList<String>> allCombinations = cartesianProd(merged);
         for (ArrayList<String> sub : allCombinations)
-            resTable.put(sub, 0.00F); // key = the comb, value = table's value
-
+            resTable.put(sub, findCurrectVal(sub,f,resVars,mulOper));
         return new CPT(resTable, resVars);
+    }
+
+    private float findCurrectVal(ArrayList<String> sub, CPT f, LinkedList<String> mergedVars, int mulOper)
+    {
+        float x = findVal(sub, f, mergedVars);
+        float y = findVal(sub, this, mergedVars);
+        mulOper++; // since we use a multiplication operation
+        return x*y;
+    }
+
+    private float findVal(ArrayList<String> sub, CPT src, LinkedList<String> mergedVars)
+    {
+        ArrayList<String> key = new ArrayList<String>();
+        int index = 0;
+        for (String var : src.varsNames) {
+            index = 0;
+            for (String mergedVar : mergedVars) {
+                if (var.equals(mergedVar)) {
+                    key.add(sub.get(index));
+                    break;
+                }
+                index++;
+            }
+        }
+        return src.tableRows.get(key);
     }
 
     public static void main(String[] args) throws IOException {
