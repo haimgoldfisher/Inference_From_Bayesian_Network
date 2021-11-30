@@ -19,6 +19,14 @@
 
 <code><img height="600" width="750" src="https://user-images.githubusercontent.com/74299934/144032019-5e179f66-0ccf-4fa2-b2cf-0171b4a9d108.png"/></code>
 
-#### An Example:
+#### Examples:
+
+Join:
+
+<code><img height="600" width="750" src="https://user-images.githubusercontent.com/74299934/144031958-74c84f37-7f11-499f-b6a6-9c4cc352c2ae.png"/></code>
+
+<code><img height="600" width="750" src="https://user-images.githubusercontent.com/74299934/144031958-74c84f37-7f11-499f-b6a6-9c4cc352c2ae.png"/></code>
+
+Eliminate:
 
 <code><img height="600" width="750" src="https://user-images.githubusercontent.com/74299934/144031958-74c84f37-7f11-499f-b6a6-9c4cc352c2ae.png"/></code>
