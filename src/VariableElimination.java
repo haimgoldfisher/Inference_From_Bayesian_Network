@@ -27,13 +27,11 @@ public class VariableElimination {
         Vector<CPT> factors = new Vector<CPT>();
         for (Node q : queryVariables.values()) // linked hashmap of factors
             factors.add(new CPT(queryVariables.get(q.key)));
-
         // end of init factors
 
         // eliminated vars by evidence
         // ...
         // end of eliminated vars by evidence
-
         for (CPT factor : factors)
             for (String evidence : given)
                 if (factor.varsNames.contains(evidence.substring(0,1)))
@@ -41,59 +39,31 @@ public class VariableElimination {
         sortFactors(factors);
 
         // hidden while
-
         String toEliminate = "";
         while (!hiddenVars.isEmpty()) {
             toEliminate = hiddenVars.remove(0);
             for (int i = 0; i < factors.size(); i++)
                 if (factors.get(i).varsNames.contains(toEliminate))
-                    for (int j = i+1; j < factors.size(); j++)
-                        if (factors.get(j).varsNames.contains(toEliminate)) {
+                    for (int j = i + 1; j < factors.size(); j++)
+                        if (factors.get(j).varsNames.contains(toEliminate) && factors.get(i).varsNames.contains(toEliminate)) {
                             factors.add(factors.get(i).join(factors.get(j), mulOpers, vars, factors));
-                            j++;
+                            sortFactors(factors);
+                            i=0;
+                            j=0;
                         }
-            }
             removeFactor(factors);
-            sortFactors(factors);
-        for (int i = 0; i < factors.size(); i++) {
-                if (factors.get(i).varsNames.contains(toEliminate))
-                    if (factors.get(i).varsNames.size() > 1)
-                        factors.get(i).eliminate(toEliminate, addOpers);
-                    else
-                        factors.remove(i);
-            }
-            removeFactor(factors);
-            sortFactors(factors);
-
-
-        while (factors.size() > 1){
-            factors.add(factors.get(0).join(factors.get(1), mulOpers, vars, factors));
-            sortFactors(factors);
+            for (CPT factor : factors)
+                if (factor.varsNames.contains(toEliminate))
+                    factor.eliminate(toEliminate, addOpers);
         }
-        factors.get(0).eliminate("A", addOpers);
+            removeFactor(factors);
+            sortFactors(factors);
+
+        while (factors.size() > 1){ // query var join
+            factors.add(factors.get(0).join(factors.get(1), mulOpers, vars, factors));
+        }
         ans = normalize(factors.get(0), queryVar, addOpers);
 
-//        while (!factors.isEmpty()) {
-//            for (CPT factor: factors)
-//                for (String evidence : given)
-//                    factor.eliminateEvidence(evidence); // without addition opers - only remove rows
-//            removeFactor(factors); // remove factors with less than 2 rows
-//            sortFactors(factors);
-//            while (!hiddenVars.isEmpty()) {
-//                toEliminate = hiddenVars.remove(0);
-//                for (CPT factor : factors){
-//                    if (factor.varsNames.contains(toEliminate))
-//                }
-//            }
-//        }
-        // eliminate by using bayes ball unnecessary nodes (dont clear color until create the list)
-        // create a list of CPT elements
-        // sort the list -> from smallest to biggest (if equals - sort by ASCII value of the key)
-        // if a factor size == 1 : remove it
-        // Eliminate / Join until find the answer!!!
-        // for each eliminate ADD++, for each join MUL++
-        // normalize the final factor
-        // update the answer
         return Math.round(ans*100000.0)/100000.0+","+addOpers+","+mulOpers;
     }
 
@@ -104,13 +74,18 @@ public class VariableElimination {
         String outcome = querySplit[1];
         ArrayList<String> key = new ArrayList<String>();
         key.add(outcome);
-        System.out.println(factor.tableRows.entrySet());
-        float up = factor.tableRows.get(key);
+        float up = 0;
         float down = 0;
-        for (float val : factor.tableRows.values()) {
-            down += val;
+        for (Map.Entry<ArrayList<String>, Float> row : factor.tableRows.entrySet()) {
+            down += row.getValue();
             addOpers++;
+            if (row.getKey().equals(key))
+                up = row.getValue();
         }
+//        for (float val : factor.tableRows.values()) {
+//            down += val;
+//            addOpers++;
+//        }
         return up/down;
     }
 
