@@ -3,6 +3,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Vector;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -104,15 +105,79 @@ public class tester {
     }
 
     @Test
+    void sortFactors_Test()
+    {
+        alarm.get("A").cpt = new CPT(alarm.get("A"));
+        alarm.get("E").cpt = new CPT(alarm.get("E"));
+        alarm.get("M").cpt = new CPT(alarm.get("M"));
+        alarm.get("J").cpt = new CPT(alarm.get("J"));
+        CPT f1 = alarm.get("A").cpt;
+        CPT f2 = alarm.get("E").cpt;
+        CPT f3 = alarm.get("M").cpt;
+        CPT f4 = alarm.get("J").cpt;
+        System.out.println(f1.tableRows.size()+","+f2.tableRows.size()+","+f3.tableRows.size()+","+f4.tableRows.size());
+        Vector<CPT> factors = new Vector<CPT>();
+        factors.add(f1);
+        factors.add(f3);
+        factors.add(f4);
+        factors.add(f2);
+        VariableElimination.sortFactors(factors);
+        for (int i = 0; i < factors.size(); i++) {
+            System.out.println(factors.get(i).tableRows.size());
+        }
+
+    }
+
+    @Test
+    void join_elim_Test()
+    {
+        alarm.get("A").cpt = new CPT(alarm.get("A"));
+        alarm.get("E").cpt = new CPT(alarm.get("E"));
+        alarm.get("M").cpt = new CPT(alarm.get("M"));
+        alarm.get("J").cpt = new CPT(alarm.get("J"));
+        CPT f1 = alarm.get("A").cpt;
+        CPT f2 = alarm.get("E").cpt;
+        CPT f3 = alarm.get("M").cpt;
+        CPT f4 = alarm.get("J").cpt;
+        System.out.println(f1.tableRows.size()+","+f2.tableRows.size()+","+f3.tableRows.size()+","+f4.tableRows.size());
+        Vector<CPT> factors = new Vector<CPT>();
+        factors.add(f1);
+        factors.add(f3);
+        factors.add(f4);
+        factors.add(f2);
+        VariableElimination.sortFactors(factors);
+        while (factors.size()>1){
+            factors.get(0).join(factors.get(1), 0, alarm, factors);
+            VariableElimination.sortFactors(factors);
+        }
+        System.out.println(factors.size());
+        System.out.println(factors.get(0).varsNames+" : "+factors.get(0).tableRows);
+    }
+
+    @Test
     void join_Test()
     {
         alarm.get("A").cpt = new CPT(alarm.get("A"));
         alarm.get("E").cpt = new CPT(alarm.get("E"));
+        alarm.get("M").cpt = new CPT(alarm.get("M"));
+        alarm.get("J").cpt = new CPT(alarm.get("J"));
         CPT f1 = alarm.get("A").cpt;
         CPT f2 = alarm.get("E").cpt;
-        CPT f3 = f1.join(f2, 0, alarm);
-        //f2.join(f1, 0, alarm);
-        System.out.println(f3.tableRows);
+        CPT f3 = alarm.get("M").cpt;
+        CPT f4 = alarm.get("J").cpt;
+        Vector<CPT> factors = new Vector<CPT>();
+        factors.add(f1);
+        factors.add(f2);
+        System.out.println(f1.varsNames+": "+f1.tableRows);
+        System.out.println(f2.varsNames+": "+f2.tableRows);
+        System.out.println(f3.varsNames+": "+f3.tableRows);
+        System.out.println(f4.varsNames+": "+f4.tableRows);
+        VariableElimination.sortFactors(factors);
+        CPT f5 = f2.join(f1, 0, alarm, factors);
+        System.out.println(f5.varsNames+": "+f5.tableRows);
+        System.out.println(factors.size());
+        f5.eliminate("A", 0);
+        System.out.println(f5.varsNames+": "+f5.tableRows);
     }
 
     @Test

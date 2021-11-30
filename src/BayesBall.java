@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class BayesBall {
+
     public static boolean bayes_ball(String query, HashMap<String, Node> vars)
     {
         String[] first = query.split("\\|"); // split the query from the given nodes
@@ -17,9 +18,7 @@ public class BayesBall {
     {
         if (given.length > 0) // else, we have no evidence nodes
             markEvidences(given, vars); // an inner function to mark all evidence nodes as colored
-        if (INDsearch(vars.get(source.key), destination.key, vars) == destination)
-            return false;
-        return true;
+        return INDsearch(vars.get(source.key), destination.key, vars) != destination;
     }
 
     /**
