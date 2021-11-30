@@ -68,10 +68,11 @@ public class CPT {
 
     public void eliminate(String toEliminate, int additionOper) {
         int eliminateCol = 0;
-        for (String name : this.varsNames)
+        for (String name : this.varsNames) {
             if (name.equals(toEliminate))
                 break;
-        eliminateCol++;
+            eliminateCol++;
+        }
         // merge rows that are the same expect of toEliminate
         LinkedHashMap<ArrayList<String>, Float> copy = new LinkedHashMap<ArrayList<String>, Float>();
         copy.putAll(this.tableRows);
@@ -127,7 +128,7 @@ public class CPT {
         this.tableRows = resTable; // update the rows of the new factor
     }
 
-    public CPT join(CPT f, int mulOper, HashMap<String, Node> vars) // this = the smaller, f = the bigger
+    public CPT join(CPT f, int mulOper, HashMap<String, Node> vars, Vector<CPT> factors) // this = the smaller, f = the bigger
     {
         LinkedHashMap<ArrayList<String>, Float> resTable = new LinkedHashMap<ArrayList<String>, Float>();
         LinkedList<String> resVars = new LinkedList<String>();
@@ -151,9 +152,11 @@ public class CPT {
                 }
                 sourceVarTarget++;
             }
+            factors.remove(f);
+            factors.remove(this);
             return new CPT(resTable, resVars); // the result factor
         }
-        return joinWithUnique(f, mulOper, vars); // for the other case - unique vars
+        return joinWithUnique(f, mulOper, vars, factors); // for the other case - unique vars
     }
 
     private void joinBy(int sourceVarTarget, int destVarTarget, LinkedHashMap<ArrayList<String>, Float> resTable, CPT f, int mulOper)
@@ -171,8 +174,8 @@ public class CPT {
             }
         }
     }
-
-    private CPT joinWithUnique(CPT f, int mulOper, HashMap<String,Node> vars)
+// maybe this is the original form of JOIN func, and I should delete the rest
+    public CPT joinWithUnique(CPT f, int mulOper, HashMap<String,Node> vars, Vector<CPT> factors)
     {
         LinkedHashMap<ArrayList<String>,Float> resTable = new LinkedHashMap<ArrayList<String>,Float>();
         LinkedList<String> resVars = new LinkedList<String>();
@@ -188,25 +191,40 @@ public class CPT {
         for (Node par : merged.parents)
             resVars.add(par.key);
         ArrayList<ArrayList<String>> allCombinations = cartesianProd(merged);
+//  we will add every new comb to the merged factor and will add the correct value to it by a func
         for (ArrayList<String> sub : allCombinations)
             resTable.put(sub, findCurrectVal(sub,f,resVars,mulOper));
+        factors.remove(f);
+        factors.remove(this);
         return new CPT(resTable, resVars);
     }
 
-    private float findCurrectVal(ArrayList<String> sub, CPT f, LinkedList<String> mergedVars, int mulOper)
+    /**
+     * the purpose of this inner function is to find the correct key from each former CPT,
+     * to save it as a float vat and then to multiply them by each other, in order to return
+     * a correct value to the given key
+     * @param sub - the combination of outcome which we need to find a correct value to it
+     * @param other - the second CPT which we operate the joining with it
+     * @param mergedVars - the columns list of the merged factor
+     * @param mulOper - the amount of multiplication operation which we did so far
+     * @return the correct value of the given sub key in the merged factor
+     */
+
+    private float findCurrectVal(ArrayList<String> sub, CPT other, LinkedList<String> mergedVars, int mulOper)
     {
-        float x = findVal(sub, f, mergedVars);
+        float x = findVal(sub, other, mergedVars);
         float y = findVal(sub, this, mergedVars);
         mulOper++; // since we use a multiplication operation
         return x*y;
     }
 
     private float findVal(ArrayList<String> sub, CPT src, LinkedList<String> mergedVars)
-    {
+    { // this func add to the current key the relevant outcomes comb from the sub key.
+      // then, it turns to the wanted CPT and by using the key - it gets the correct value
         ArrayList<String> key = new ArrayList<String>();
-        int index = 0;
+        int index = 0; // so we can take the correct outcome from the sub key
         for (String var : src.varsNames) {
-            index = 0;
+            index = 0; // init the index to 0 every new src outcome
             for (String mergedVar : mergedVars) {
                 if (var.equals(mergedVar)) {
                     key.add(sub.get(index));
@@ -215,6 +233,7 @@ public class CPT {
                 index++;
             }
         }
+        // now, we have the wanted key, we can take its value from the former CPT
         return src.tableRows.get(key);
     }
 
@@ -227,8 +246,5 @@ public class CPT {
         alarm.get("M").cpt = new CPT(alarm.get("M"));
         System.out.println(alarm.get("M").cpt.varsNames);
         System.out.println(alarm.get("M").cpt.tableRows);
-        CPT f1 = alarm.get("M").cpt.join(alarm.get("A").cpt, 0, alarm);
-        System.out.println(f1.varsNames);
-        System.out.println(f1.tableRows);
     }
 }
