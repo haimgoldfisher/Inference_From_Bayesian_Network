@@ -6,7 +6,7 @@ public class Ex1 {
      *  Main Class
      */
     public static void main(String[] args) throws IOException {
-        String strFromUser = "src/input.txt"; // scanner???
+        String strFromUser = "src/input2.txt"; // scanner???
         //File output = createFile(); // maybe the name of the output must be familiar with the input
         BufferedWriter output = new BufferedWriter(new FileWriter("output"));
         readTXT(strFromUser, output);

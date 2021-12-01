@@ -14,7 +14,7 @@ public class BayesBall {
         return independence(vars.get(ind[0]), vars.get(ind[1]), given, vars); // after filtering
     }
 
-    private static boolean independence(Node source, Node destination, String[] given, HashMap<String,Node> vars)
+    public static boolean independence(Node source, Node destination, String[] given, HashMap<String,Node> vars)
     {
         if (given.length > 0) // else, we have no evidence nodes
             markEvidences(given, vars); // an inner function to mark all evidence nodes as colored

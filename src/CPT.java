@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class CPT {
     /** CPT table as columns and rows. our class will represent a CPT table:
@@ -66,7 +67,7 @@ public class CPT {
         return allKeys;
     }
 
-    public void eliminate(String toEliminate, int additionOper) {
+    public void eliminate(String toEliminate, AtomicInteger additionOper) {
         int eliminateCol = 0;
         for (String name : this.varsNames) {
             if (name.equals(toEliminate))
@@ -91,7 +92,7 @@ public class CPT {
                         float x = i.getValue();
                         float y = j.getValue();
                         copy.put(i.getKey(), x + y); // add the values of the same key
-                        additionOper++;
+                        additionOper.addAndGet(1);
                         copy.remove(j.getKey()); // eliminate the other row
                     }
                     else same = false; // after met the same value, the next meeting will be with other
@@ -128,7 +129,7 @@ public class CPT {
         this.tableRows = resTable; // update the rows of the new factor
     }
 
-    public CPT join(CPT f, int mulOper, HashMap<String, Node> vars, Vector<CPT> factors) // this = the smaller, f = the bigger
+    public CPT join(CPT f, AtomicInteger mulOper, HashMap<String, Node> vars, Vector<CPT> factors) // this = the smaller, f = the bigger
     {
         LinkedHashMap<ArrayList<String>, Float> resTable = new LinkedHashMap<ArrayList<String>, Float>();
         LinkedList<String> resVars = new LinkedList<String>();
@@ -139,43 +140,32 @@ public class CPT {
                 if (name.equals(name_ot))
                     counter++;
         if (this.varsNames.size() == counter) { // no unique vars
-            int sourceVarTarget = 0;
-            int destVarTarget = 0;
-            resTable.putAll(f.tableRows);
-            resVars.addAll(f.varsNames);
-            for (String src : this.varsNames) {
-                for (String dst : f.varsNames) {
-                    if (src.equals(dst)) {
-                        joinBy(sourceVarTarget, destVarTarget, resTable, f, mulOper);
-                    }
-                    destVarTarget++;
-                }
-                sourceVarTarget++;
-            }
-            factors.remove(f);
-            factors.remove(this);
-            return new CPT(resTable, resVars); // the result factor
+            return joinWithEqual(f, mulOper, vars, factors);
         }
         return joinWithUnique(f, mulOper, vars, factors); // for the other case - unique vars
     }
 
-    private void joinBy(int sourceVarTarget, int destVarTarget, LinkedHashMap<ArrayList<String>, Float> resTable, CPT f, int mulOper)
+    private CPT joinWithEqual(CPT f, AtomicInteger mulOper, HashMap<String,Node> vars, Vector<CPT> factors)
     {
-        for (Map.Entry<ArrayList<String>, Float> row_src : this.tableRows.entrySet()) {
-            ArrayList<String> key_src = row_src.getKey();
-            for (Map.Entry<ArrayList<String>, Float> row_dst : f.tableRows.entrySet()) {
-                ArrayList<String> key_dst = row_dst.getKey();
-                if (Objects.equals(key_src.get(sourceVarTarget), key_dst.get(destVarTarget))) {
-                    float x = row_src.getValue();
-                    float y = row_dst.getValue();
-                    resTable.put(key_dst, x*y);
-                    mulOper++;
-                }
-            }
+        LinkedHashMap<ArrayList<String>, Float> resTable = new LinkedHashMap<ArrayList<String>, Float>();
+        LinkedList<String> resVars = new LinkedList<String>();
+        resVars.addAll(f.varsNames);
+        float x = 0;
+        float y = 0;
+        for (Map.Entry<ArrayList<String>, Float> dst : f.tableRows.entrySet()) {
+            x = 0;
+            x += dst.getValue();
+            y = findVal(dst.getKey(), this, f.varsNames);
+            resTable.put(dst.getKey(), x * y);
+            mulOper.addAndGet(1);
         }
+        factors.remove(f);
+        factors.remove(this);
+        return new CPT(resTable, resVars); // the result factor
     }
+
 // maybe this is the original form of JOIN func, and I should delete the rest
-    public CPT joinWithUnique(CPT f, int mulOper, HashMap<String,Node> vars, Vector<CPT> factors)
+    public CPT joinWithUnique(CPT f, AtomicInteger mulOper, HashMap<String,Node> vars, Vector<CPT> factors)
     {
         LinkedHashMap<ArrayList<String>,Float> resTable = new LinkedHashMap<ArrayList<String>,Float>();
         LinkedList<String> resVars = new LinkedList<String>();
@@ -210,11 +200,11 @@ public class CPT {
      * @return the correct value of the given sub key in the merged factor
      */
 
-    private float findCurrectVal(ArrayList<String> sub, CPT other, LinkedList<String> mergedVars, int mulOper)
+    private float findCurrectVal(ArrayList<String> sub, CPT other, LinkedList<String> mergedVars, AtomicInteger mulOper)
     {
         float x = findVal(sub, other, mergedVars);
         float y = findVal(sub, this, mergedVars);
-        mulOper++; // since we use a multiplication operation
+        mulOper.addAndGet(1); // since we use a multiplication operation
         return x*y;
     }
 
@@ -234,17 +224,10 @@ public class CPT {
             }
         }
         // now, we have the wanted key, we can take its value from the former CPT
+        for (Map.Entry<ArrayList<String>, Float> row : src.tableRows.entrySet()) {
+            if (row.getKey().equals(key))
+                return row.getValue();
+        }
         return src.tableRows.get(key);
-    }
-
-    public static void main(String[] args) throws IOException {
-        String q = "P(B=T|J=T,M=T) A-E";
-        HashMap<String, Node> alarm = myXMLreader.XMLreader("alarm_net.xml");
-        alarm.get("A").cpt = new CPT(alarm.get("A"));
-        System.out.println(alarm.get("A").cpt.varsNames);
-        System.out.println(alarm.get("A").cpt.tableRows);
-        alarm.get("M").cpt = new CPT(alarm.get("M"));
-        System.out.println(alarm.get("M").cpt.varsNames);
-        System.out.println(alarm.get("M").cpt.tableRows);
     }
 }

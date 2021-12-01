@@ -1,13 +1,16 @@
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class VariableElimination {
     public static String variable_elimination(String query, HashMap<String, Node> vars)
     {
         float ans = 0; // the final answer
-        int mulOpers = 0; // multiplication operations
-        int addOpers = 0; // addition  operations
+//        int mulOpers = 0; // multiplication operations
+//        int addOpers = 0; // addition operations
+        AtomicInteger mulOpers = new AtomicInteger(0); // multiplication operations
+        AtomicInteger addOpers = new AtomicInteger(0); // addition operations
         String[] first = query.split(" "); // [query|evidence, hidden(order)]
         first[0] = first[0].substring(2, first[0].length()-1);
         String[] queryStr = first[0].split("\\|"); // [query | evidence]
@@ -17,25 +20,54 @@ public class VariableElimination {
         if (queryStr.length > 1) // else, we have no given nodes in this query
             given = queryStr[1].split(",");
         String queryVar = queryStr[0];
-        BayesBall.markEvidences(given, vars);
-        HashMap<String, Node> queryVariables = new HashMap<String, Node>(); // copy of the hashmap
-        queryVariables.putAll(vars); // put all keys and values from the network in the list
-        // apply bayes ball and get rid of the nodes which don't affect the query
-
-        // init factors
+        HashMap<String, Node> allVariables = new HashMap<String, Node>(); // copy of the hashmap
+        allVariables.putAll(vars); // put all keys and values from the network in the list
 
         Vector<CPT> factors = new Vector<CPT>();
-        for (Node q : queryVariables.values()) // linked hashmap of factors
-            factors.add(new CPT(queryVariables.get(q.key)));
-        // end of init factors
+        for (Node q : allVariables.values()) // linked hashmap of factors
+            factors.add(new CPT(allVariables.get(q.key)));
 
-        // eliminated vars by evidence
-        // ...
-        // end of eliminated vars by evidence
         for (CPT factor : factors)
             for (String evidence : given)
-                if (factor.varsNames.contains(evidence.substring(0,1)))
+                if (factor.varsNames.contains(evidence.split("=")[0]))
                     factor.eliminateEvidence(evidence);
+        sortFactors(factors);
+
+        ArrayList<String> querEvid = new ArrayList<String>();
+        for (String name : vars.keySet()) {
+            if (!hiddenVars.contains(name) && !querEvid.contains(name))
+                querEvid.add(name);
+        }
+        ArrayList<String> hiddenToRemove = new ArrayList<String>();
+        for (int i = 0; i < hiddenVars.size(); i++ ){
+            int counter = 0;
+            for(String qeurOrEviVar : querEvid) {
+                BayesBall.resetVars(vars);
+                if (vars.get(hiddenVars.get(i)).bfs(qeurOrEviVar) == null)
+                    counter++;
+                if (counter == querEvid.size()) {
+                    hiddenToRemove.add(hiddenVars.get(i));
+                    hiddenVars.remove((hiddenVars.get(i)));
+                    counter = 0;
+                }
+            }
+        }
+        for (int i = 0; i < hiddenVars.size(); i++ ){
+            BayesBall.resetVars(vars);
+            if (BayesBall.independence(vars.get(hiddenVars.get(i)), vars.get(queryVar.split("=")[0]), given, vars)){
+                hiddenToRemove.add(hiddenVars.get(i));
+                hiddenVars.remove((hiddenVars.get(i)));
+                i = 0;
+            }
+        }
+
+        for (String evid : hiddenToRemove){
+            for (int i = 0; i < factors.size(); i++)
+                if (factors.get(i).varsNames.contains(evid)){
+                    factors.remove(i);
+                    i = 0;
+                }
+        }
         sortFactors(factors);
 
         // hidden while
@@ -62,12 +94,19 @@ public class VariableElimination {
         while (factors.size() > 1){ // query var join
             factors.add(factors.get(0).join(factors.get(1), mulOpers, vars, factors));
         }
-        ans = normalize(factors.get(0), queryVar, addOpers);
+        while (factors.get(0).varsNames.size()>1) {
+            for (int i = 0; i < factors.get(0).varsNames.size(); i++)
+                if (!Objects.equals(factors.get(0).varsNames.get(i), queryVar.split("=")[0])) {
+                    factors.get(0).eliminate(factors.get(0).varsNames.get(i), addOpers);
+                    i = 0;
+                }
+        }
 
+        ans = normalize(factors.get(0), queryVar, addOpers);
         return Math.round(ans*100000.0)/100000.0+","+addOpers+","+mulOpers;
     }
 
-    public static float normalize(CPT factor, String query, int addOpers)
+    public static float normalize(CPT factor, String query, AtomicInteger addOpers)
     {
         String[] querySplit = query.split("=");
         String queryVar = querySplit[0];
@@ -78,14 +117,10 @@ public class VariableElimination {
         float down = 0;
         for (Map.Entry<ArrayList<String>, Float> row : factor.tableRows.entrySet()) {
             down += row.getValue();
-            addOpers++;
+            addOpers.addAndGet(1);
             if (row.getKey().equals(key))
                 up = row.getValue();
         }
-//        for (float val : factor.tableRows.values()) {
-//            down += val;
-//            addOpers++;
-//        }
         return up/down;
     }
 
