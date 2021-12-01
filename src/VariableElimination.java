@@ -7,8 +7,6 @@ public class VariableElimination {
     public static String variable_elimination(String query, HashMap<String, Node> vars)
     {
         float ans = 0; // the final answer
-//        int mulOpers = 0; // multiplication operations
-//        int addOpers = 0; // addition operations
         AtomicInteger mulOpers = new AtomicInteger(0); // multiplication operations
         AtomicInteger addOpers = new AtomicInteger(0); // addition operations
         String[] first = query.split(" "); // [query|evidence, hidden(order)]
@@ -23,21 +21,37 @@ public class VariableElimination {
         HashMap<String, Node> allVariables = new HashMap<String, Node>(); // copy of the hashmap
         allVariables.putAll(vars); // put all keys and values from the network in the list
 
+        // Init Factors:
+
         Vector<CPT> factors = new Vector<CPT>();
         for (Node q : allVariables.values()) // linked hashmap of factors
             factors.add(new CPT(allVariables.get(q.key)));
+
+        // Evidence Outcomes Update:
 
         for (CPT factor : factors)
             for (String evidence : given)
                 if (factor.varsNames.contains(evidence.split("=")[0]))
                     factor.eliminateEvidence(evidence);
-        sortFactors(factors);
+
+//  Unnecessary Factors Elimination:
 
         ArrayList<String> querEvid = new ArrayList<String>();
         for (String name : vars.keySet()) {
             if (!hiddenVars.contains(name) && !querEvid.contains(name))
                 querEvid.add(name);
         }
+
+        if (querEvid.size()==1){
+            for (CPT factor : factors)
+                if (factor.varsNames.size()==1 && factor.varsNames.contains(querEvid.get(0))){
+                    ans = normalize(factor, queryVar, addOpers);
+                    return Math.round(ans*100000.0)/100000.0+","+addOpers+","+mulOpers;
+                }
+        }
+
+        // Eliminate Factors of h Vars Which q\e Vars Aren't Ancestor of Them
+
         ArrayList<String> hiddenToRemove = new ArrayList<String>();
         for (int i = 0; i < hiddenVars.size(); i++ ){
             int counter = 0;
@@ -52,6 +66,9 @@ public class VariableElimination {
                 }
             }
         }
+
+        // Eliminate Factors of h Vars Which Are Independent in Query:
+
         for (int i = 0; i < hiddenVars.size(); i++ ){
             BayesBall.resetVars(vars);
             if (BayesBall.independence(vars.get(hiddenVars.get(i)), vars.get(queryVar.split("=")[0]), given, vars)){
@@ -61,18 +78,20 @@ public class VariableElimination {
             }
         }
 
-        for (String evid : hiddenToRemove){
+        for (String hid : hiddenToRemove){
             for (int i = 0; i < factors.size(); i++)
-                if (factors.get(i).varsNames.contains(evid)){
+                if (factors.get(i).varsNames.contains(hid)){
                     factors.remove(i);
                     i = 0;
                 }
         }
         sortFactors(factors);
 
-        // hidden while
+//  Hidden Vars While:
+
         String toEliminate = "";
-        while (!hiddenVars.isEmpty()) {
+        while (!hiddenVars.isEmpty())
+        {
             toEliminate = hiddenVars.remove(0);
             for (int i = 0; i < factors.size(); i++)
                 if (factors.get(i).varsNames.contains(toEliminate))
@@ -83,24 +102,22 @@ public class VariableElimination {
                             i=0;
                             j=0;
                         }
-            removeFactor(factors);
-            for (CPT factor : factors)
-                if (factor.varsNames.contains(toEliminate))
-                    factor.eliminate(toEliminate, addOpers);
-        }
-            removeFactor(factors);
-            sortFactors(factors);
-
-        while (factors.size() > 1){ // query var join
-            factors.add(factors.get(0).join(factors.get(1), mulOpers, vars, factors));
-        }
-        while (factors.get(0).varsNames.size()>1) {
-            for (int i = 0; i < factors.get(0).varsNames.size(); i++)
-                if (!Objects.equals(factors.get(0).varsNames.get(i), queryVar.split("=")[0])) {
-                    factors.get(0).eliminate(factors.get(0).varsNames.get(i), addOpers);
+            for (int i = 0; i < factors.size(); i++)
+                if (factors.get(i).varsNames.contains(toEliminate)) {
+                    factors.get(i).eliminate(toEliminate, addOpers);
+                    //factors.get(i).eliminate2(vars, toEliminate, addOpers);
+                    removeFactor(factors);
                     i = 0;
                 }
         }
+            sortFactors(factors);
+
+//  Join on Query:
+
+        while (factors.size() > 1)
+            factors.add(factors.get(0).join(factors.get(1), mulOpers, vars, factors));
+
+//  Normalization & Answer Returning:
 
         ans = normalize(factors.get(0), queryVar, addOpers);
         return Math.round(ans*100000.0)/100000.0+","+addOpers+","+mulOpers;
@@ -116,8 +133,12 @@ public class VariableElimination {
         float up = 0;
         float down = 0;
         for (Map.Entry<ArrayList<String>, Float> row : factor.tableRows.entrySet()) {
-            down += row.getValue();
-            addOpers.addAndGet(1);
+            if (down == 0)
+                down = row.getValue(); // to avoid addition operation
+            else {
+                down += row.getValue();
+                addOpers.addAndGet(1);
+            }
             if (row.getKey().equals(key))
                 up = row.getValue();
         }

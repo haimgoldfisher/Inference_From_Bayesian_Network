@@ -45,7 +45,7 @@ public class CPT {
      */
     private ArrayList<ArrayList<String>> cartesianProd(Node curr)
     {
-        int cols = this.varsNames.size()-1; // num of cols = size of varsNames - values col
+        int cols = this.varsNames.size(); // num of cols = size of varsNames
         ArrayList<ArrayList<String>> myOutcomesSets = new ArrayList<ArrayList<String>>(cols);
         myOutcomesSets.add(curr.outcome);
         int size = curr.outcome.size(); // init num of combs to # outcome values of this node
@@ -65,6 +65,54 @@ public class CPT {
             allKeys.add(combination);
         }
         return allKeys;
+    }
+
+    public void eliminate2(HashMap<String, Node> vars, String toEliminate, AtomicInteger additionOper) {
+        ArrayList<String> resVars = new ArrayList<String>();
+        resVars.addAll(this.varsNames);
+        LinkedHashMap<ArrayList<String>, Float> resTable = new LinkedHashMap<ArrayList<String>, Float>();
+        ArrayList<ArrayList<String>> combs = new ArrayList<ArrayList<String>>();
+        for (ArrayList<String> key: this.tableRows.keySet()) {
+            ArrayList<String> toAdd = new ArrayList<String>();
+            for (int i = 0; i < key.size(); i++)
+                toAdd.add(key.get(i));
+            combs.add(toAdd);
+        }
+        int col = 0;
+        while (!Objects.equals(this.varsNames.get(col), toEliminate))
+            col++;
+        resVars.remove(col);
+        for (ArrayList<String> key : combs)
+            key.remove(col);
+        for (int i = 0; i < combs.size(); i++) {
+            for (int j = i+1; j < combs.size(); j++) {
+                if (combs.get(i).equals(combs.get(j))) {
+                    combs.remove(j);
+                }
+            }
+        }
+        float res = 0;
+        for (ArrayList<String> c : combs) {
+            for (String outcome : vars.get(toEliminate).outcome) {
+                ArrayList<String> key = new ArrayList<String>();
+                for (int i = 0; i < this.varsNames.size(); i++) {
+                    if (i < resVars.size() && this.varsNames.get(i).equals(resVars.get(i)))
+                        key.add(c.get(i));
+                    else
+                        key.add(outcome);
+                }
+                for (Map.Entry<ArrayList<String>, Float> row : this.tableRows.entrySet()) {
+                    if (row.getKey().equals(key)) {
+                        res += row.getValue();
+                        additionOper.addAndGet(1);
+                    }
+                }
+            }
+            resTable.put(c, res);
+        }
+        additionOper.addAndGet(-1);
+        this.tableRows = resTable;
+        this.varsNames.remove(col);
     }
 
     public void eliminate(String toEliminate, AtomicInteger additionOper) {
