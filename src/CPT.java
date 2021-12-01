@@ -125,26 +125,27 @@ public class CPT {
         // merge rows that are the same expect of toEliminate
         LinkedHashMap<ArrayList<String>, Float> copy = new LinkedHashMap<ArrayList<String>, Float>();
         copy.putAll(this.tableRows);
-        boolean same = true;
+        //boolean same = true;
+        int i_index = 0;
         for (Map.Entry<ArrayList<String>, Float> i : this.tableRows.entrySet()) {
             ArrayList<String> key_i = new ArrayList<String>();
             key_i.addAll(i.getKey());
             key_i.remove(eliminateCol);
-            same = true;
+            int j_index = 0;
             for (Map.Entry<ArrayList<String>, Float> j : this.tableRows.entrySet()) {
                 ArrayList<String> key_j = new ArrayList<String>();
                 key_j.addAll(j.getKey());
                 key_j.remove(eliminateCol);
-                if (key_i.equals(key_j))
-                    if (!same) { // the first meet with the same key is always the same value - ignore
-                        float x = i.getValue();
-                        float y = j.getValue();
-                        copy.put(i.getKey(), x + y); // add the values of the same key
-                        additionOper.addAndGet(1);
-                        copy.remove(j.getKey()); // eliminate the other row
-                    }
-                    else same = false; // after met the same value, the next meeting will be with other
+                if (key_i.equals(key_j) && i_index>j_index){ // the first meet with the same key is always the same value - ignore
+                    float x = i.getValue();
+                    float y = j.getValue();
+                    copy.put(i.getKey(), x + y); // add the values of the same key
+                    additionOper.addAndGet(1);
+                    copy.remove(j.getKey()); // eliminate the other row
+                }
+                j_index++;
             }
+        i_index++;
         }
         for (ArrayList<String> key : copy.keySet())
             key.remove(eliminateCol);
