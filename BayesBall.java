@@ -1,4 +1,3 @@
-import java.io.IOException;
 import java.util.*;
 
 public class BayesBall {
@@ -43,7 +42,7 @@ public class BayesBall {
                 return vars.get(target); // the Algo had reached to the node, return it!
             if (curr.color == Node.UNCOLORED && curr.visit == Node.VISIT_FROM_CHILD) { // case 1
                 if (curr.hasChild())
-                    for (Node child : curr.next)
+                    for (Node child : curr.children)
                         if (child.visit == Node.UNVISITED) {
                             child.visit = Node.VISIT_FROM_PARENT;
                             toVisit.add(child);
@@ -57,7 +56,7 @@ public class BayesBall {
             }
             else if (curr.color == Node.UNCOLORED && curr.visit == Node.VISIT_FROM_PARENT) { // case 2
                 if (curr.hasChild())
-                    for (Node child : curr.next)
+                    for (Node child : curr.children)
                         if (child.visit != Node.VISIT_FROM_PARENT) {
                             child.visit = Node.VISIT_FROM_PARENT;
                             toVisit.add(child);

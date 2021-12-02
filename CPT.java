@@ -1,25 +1,24 @@
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CPT {
     /** CPT table as columns and rows. our class will represent a CPT table:
      *  Rows: a linked list of hashmaps: the key is an arraylist with the outcome values.
-     *  the value is the double value (last value in the row)
-     *  Columns: a linked list of String names, which every String represent a column
+     *  the value is the float value (like the last value in the row of the table)
+     *  Columns: a linked list of String names, which every String represent a column / variable
      */
-    LinkedHashMap<ArrayList<String>,Float> tableRows; // the order of outcomes as key, value as value
-    LinkedList<String> varsNames; // the order of the columns
+    LinkedHashMap<ArrayList<String>,Float> tableRows; // the order of outcomes as key
+    LinkedList<String> varsNames; // the name & order of the columns
 
-    public CPT(Node n)
+    public CPT(Node n) // constructor
     {
         this.tableRows = new LinkedHashMap<ArrayList<String>,Float>();
         this.varsNames = new LinkedList<String>();
-        fillCPT(n);
+        fillCPT(n); // fill the CPT values to the given Node
     }
 
     public CPT(LinkedHashMap<ArrayList<String>,Float> table, LinkedList<String> vars)
-    {
+    { // copy constructor:
         this.tableRows = table;
         this.varsNames = vars;
     }
@@ -67,54 +66,6 @@ public class CPT {
         return allKeys;
     }
 
-    public void eliminate2(HashMap<String, Node> vars, String toEliminate, AtomicInteger additionOper) {
-        ArrayList<String> resVars = new ArrayList<String>();
-        resVars.addAll(this.varsNames);
-        LinkedHashMap<ArrayList<String>, Float> resTable = new LinkedHashMap<ArrayList<String>, Float>();
-        ArrayList<ArrayList<String>> combs = new ArrayList<ArrayList<String>>();
-        for (ArrayList<String> key: this.tableRows.keySet()) {
-            ArrayList<String> toAdd = new ArrayList<String>();
-            for (int i = 0; i < key.size(); i++)
-                toAdd.add(key.get(i));
-            combs.add(toAdd);
-        }
-        int col = 0;
-        while (!Objects.equals(this.varsNames.get(col), toEliminate))
-            col++;
-        resVars.remove(col);
-        for (ArrayList<String> key : combs)
-            key.remove(col);
-        for (int i = 0; i < combs.size(); i++) {
-            for (int j = i+1; j < combs.size(); j++) {
-                if (combs.get(i).equals(combs.get(j))) {
-                    combs.remove(j);
-                }
-            }
-        }
-        float res = 0;
-        for (ArrayList<String> c : combs) {
-            for (String outcome : vars.get(toEliminate).outcome) {
-                ArrayList<String> key = new ArrayList<String>();
-                for (int i = 0; i < this.varsNames.size(); i++) {
-                    if (i < resVars.size() && this.varsNames.get(i).equals(resVars.get(i)))
-                        key.add(c.get(i));
-                    else
-                        key.add(outcome);
-                }
-                for (Map.Entry<ArrayList<String>, Float> row : this.tableRows.entrySet()) {
-                    if (row.getKey().equals(key)) {
-                        res += row.getValue();
-                        additionOper.addAndGet(1);
-                    }
-                }
-            }
-            resTable.put(c, res);
-        }
-        additionOper.addAndGet(-1);
-        this.tableRows = resTable;
-        this.varsNames.remove(col);
-    }
-
     public void eliminate(String toEliminate, AtomicInteger additionOper) {
         int eliminateCol = 0;
         for (String name : this.varsNames) {
@@ -123,35 +74,54 @@ public class CPT {
             eliminateCol++;
         }
         // merge rows that are the same expect of toEliminate
-        LinkedHashMap<ArrayList<String>, Float> copy = new LinkedHashMap<ArrayList<String>, Float>();
-        copy.putAll(this.tableRows);
+        LinkedHashMap<ArrayList<String>, Float> resTable = new LinkedHashMap<ArrayList<String>, Float>();
+        resTable.putAll(this.tableRows);
         //boolean same = true;
         int i_index = 0;
+//  we will move twice one the same factor and will sum every same key to the res row
         for (Map.Entry<ArrayList<String>, Float> i : this.tableRows.entrySet()) {
             ArrayList<String> key_i = new ArrayList<String>();
             key_i.addAll(i.getKey());
             key_i.remove(eliminateCol);
             int j_index = 0;
+            float x = i.getValue();
+            float y = 0;
             for (Map.Entry<ArrayList<String>, Float> j : this.tableRows.entrySet()) {
                 ArrayList<String> key_j = new ArrayList<String>();
                 key_j.addAll(j.getKey());
                 key_j.remove(eliminateCol);
-                if (key_i.equals(key_j) && i_index>j_index){ // the first meet with the same key is always the same value - ignore
-                    float x = i.getValue();
-                    float y = j.getValue();
-                    copy.put(i.getKey(), x + y); // add the values of the same key
-                    additionOper.addAndGet(1);
-                    copy.remove(j.getKey()); // eliminate the other row
+// the index of key[j] & key[i] cannot be the same (it's the same value)
+// + we need to avoid the case of key[i] == key[j] & key[j] == key[i] (when i != j)
+                if (key_i.equals(key_j) && i_index > j_index) { // the keys equal, indexes are not!
+                    if (y == 0) {
+                        y = j.getValue(); // because every time we have a new j = new addition oper
+                        additionOper.addAndGet(1);
+                    }
+                    else { // y is bigger than 0:
+                        y += j.getValue();
+                    }
+                    resTable.remove(j.getKey()); // eliminate the other row
                 }
                 j_index++;
             }
+        resTable.put(i.getKey(), x + y); // add the values of the same key
         i_index++;
         }
-        for (ArrayList<String> key : copy.keySet())
+        for (ArrayList<String> key : resTable.keySet())
             key.remove(eliminateCol);
-        this.tableRows = copy;
+        this.tableRows = resTable;
         this.varsNames.remove(eliminateCol);
     }
+
+    /**
+     * The purpose of this function is to eliminate the evidence variables from each factor that
+     * contains them. After this elimination, the factor will remain with the rows which the
+     * outcome of the evidence is known to us. Moreover, after delete the other rows, the
+     * evidence column and outcomes aren't necessary - we will drop that variable from the
+     * variables list of the factor and remove its outcome from each row.
+     * @param evidence - the evidence variable and its outcome.
+     * for example: "A=T", "B=F", "C=v1" ...
+     */
 
     public void eliminateEvidence(String evidence)
     {
@@ -188,11 +158,13 @@ public class CPT {
             for (String name_ot : f.varsNames)
                 if (name.equals(name_ot))
                     counter++;
-        if (this.varsNames.size() == counter) { // no unique vars
+        if (this.varsNames.size() == counter) { // the bigger factor has the vars of the smaller
             return joinWithEqual(f, mulOper, vars, factors);
         }
+        // every factor has unique factor(s) that the second hasn't
         return joinWithUnique(f, mulOper, vars, factors); // for the other case - unique vars
     }
+
 
     private CPT joinWithEqual(CPT f, AtomicInteger mulOper, HashMap<String,Node> vars, Vector<CPT> factors)
     {
@@ -204,16 +176,16 @@ public class CPT {
         for (Map.Entry<ArrayList<String>, Float> dst : f.tableRows.entrySet()) {
             x = 0;
             x += dst.getValue();
-            y = findVal(dst.getKey(), this, f.varsNames);
-            resTable.put(dst.getKey(), x * y);
+            y = findVal(dst.getKey(), this, f.varsNames); // inner func to find the value
+            resTable.put(dst.getKey(), x * y); // join == mul operation
             mulOper.addAndGet(1);
         }
+        // remove the two above factors from the factors vector:
         factors.remove(f);
         factors.remove(this);
-        return new CPT(resTable, resVars); // the result factor
+        return new CPT(resTable, resVars); // the merged factor
     }
 
-// maybe this is the original form of JOIN func, and I should delete the rest
     public CPT joinWithUnique(CPT f, AtomicInteger mulOper, HashMap<String,Node> vars, Vector<CPT> factors)
     {
         LinkedHashMap<ArrayList<String>,Float> resTable = new LinkedHashMap<ArrayList<String>,Float>();
