@@ -166,7 +166,7 @@ public class VariableElimination {
         return res;
     }
 
-    private static void sortFactors(Vector<CPT> factors)
+    static void sortFactors(Vector<CPT> factors)
     {
         for (int i = 0; i < factors.size(); i++)
             for (int j = i+1; j < factors.size(); j++) {

@@ -15,7 +15,7 @@ public class myXMLreader {
 
     public static HashMap<String, Node> XMLreader(String path) throws IOException
     {
-        BufferedReader reader = new BufferedReader(new FileReader(path));
+        BufferedReader reader = new BufferedReader(new FileReader("src/"+path));
         String currLine; // for each line of the XML file
         if (!Objects.equals(currLine = reader.readLine(), "<NETWORK>")) {
             throw new IllegalArgumentException(); // the first line must be in format
