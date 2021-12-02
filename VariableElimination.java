@@ -1,4 +1,3 @@
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -33,6 +32,8 @@ public class VariableElimination {
                 if (factor.varsNames.contains(evidence.split("=")[0]))
                     factor.eliminateEvidence(evidence);
 
+        // at this moment, the factors contain only query & hidden vars
+
 //  Unnecessary Factors Elimination:
 
         ArrayList<String> querEvid = new ArrayList<String>();
@@ -41,13 +42,10 @@ public class VariableElimination {
                 querEvid.add(name);
         }
 
-        if (querEvid.size()==1){
-            for (CPT factor : factors)
-                if (factor.varsNames.size()==1 && factor.varsNames.contains(querEvid.get(0))){
-                    ans = normalize(factor, queryVar, addOpers);
-                    return Math.round(ans*100000.0)/100000.0+","+addOpers+","+mulOpers;
-                }
-        }
+        // Quick Answer without Join/Elimination and Normalization case checking:
+
+        if (querEvid.size()==1)
+            return quickAnswer(factors, querEvid, queryVar, addOpers, mulOpers);
 
         // Eliminate Factors of h Vars Which q\e Vars Aren't Ancestor of Them
 
@@ -66,7 +64,7 @@ public class VariableElimination {
             }
         }
 
-        // Eliminate Factors of h Vars Which Are Independent in Query:
+        // Eliminate Factors with h Vars Which Are Independent in Query:
 
         for (int i = 0; i < hiddenVars.size(); i++ ){
             BayesBall.resetVars(vars);
@@ -86,12 +84,13 @@ public class VariableElimination {
         }
         sortFactors(factors);
 
-//  Hidden Vars While:
+//  Hidden Vars while until no more Hidden vars in the factors:
 
         String toEliminate = "";
         while (!hiddenVars.isEmpty())
         {
             toEliminate = hiddenVars.remove(0);
+//  join on each hidden var - until only 1 factor contain it, then eliminate it from that factor:
             for (int i = 0; i < factors.size(); i++)
                 if (factors.get(i).varsNames.contains(toEliminate))
                     for (int j = i + 1; j < factors.size(); j++)
@@ -101,15 +100,14 @@ public class VariableElimination {
                             i=0;
                             j=0;
                         }
-            for (int i = 0; i < factors.size(); i++)
+            for (int i = 0; i < factors.size(); i++) // eliminate the curr hidden var from its factor:
                 if (factors.get(i).varsNames.contains(toEliminate)) {
                     factors.get(i).eliminate(toEliminate, addOpers);
-                    //factors.get(i).eliminate2(vars, toEliminate, addOpers);
                     removeFactor(factors);
                     i = 0;
                 }
         }
-            sortFactors(factors);
+    // at this moment, we have only factor(s) with the query variable
 
 //  Join on Query:
 
@@ -122,10 +120,18 @@ public class VariableElimination {
         return Math.round(ans*100000.0)/100000.0+","+addOpers+","+mulOpers;
     }
 
-    public static float normalize(CPT factor, String query, AtomicInteger addOpers)
+    private static String quickAnswer(Vector<CPT> factors, ArrayList<String> querEvid, String queryVar, AtomicInteger addOpers, AtomicInteger mulOpers)
+    { // the func returns the answer of the query when the answer is already given to us
+        float ans = 0;
+        for (CPT factor : factors)
+            if (factor.varsNames.size()==1 && factor.varsNames.contains(querEvid.get(0)))
+                ans = ansWithoutNormalize(factor, queryVar);
+        return Math.round(ans*100000.0)/100000.0+","+addOpers+","+mulOpers;
+    }
+
+    private static float normalize(CPT factor, String query, AtomicInteger addOpers)
     {
         String[] querySplit = query.split("=");
-        String queryVar = querySplit[0];
         String outcome = querySplit[1];
         ArrayList<String> key = new ArrayList<String>();
         key.add(outcome);
@@ -144,7 +150,23 @@ public class VariableElimination {
         return up/down;
     }
 
-    public static void sortFactors(Vector<CPT> factors) // O(n^2) -> O(nlogn)
+    private static float ansWithoutNormalize(CPT factor, String query)
+    { // answer calculation when normalization is no needed
+        String[] querySplit = query.split("=");
+        String outcome = querySplit[1];
+        ArrayList<String> key = new ArrayList<String>();
+        key.add(outcome);
+        float res = 0;
+        for (Map.Entry<ArrayList<String>, Float> row : factor.tableRows.entrySet()) {
+            if (row.getKey().equals(key)) {
+                res = row.getValue();
+                break;
+            }
+        }
+        return res;
+    }
+
+    private static void sortFactors(Vector<CPT> factors)
     {
         for (int i = 0; i < factors.size(); i++)
             for (int j = i+1; j < factors.size(); j++) {
@@ -156,7 +178,7 @@ public class VariableElimination {
     }
 
     private static void sortByASCII(Vector<CPT> factors, int factorA, int factorB)
-    {
+    { // when two factors are equal - sort them by ASCII values of the vars
         int VarsValues_A = 0;
         int VarsValues_B = 0;
         for (String str : factors.get(factorA).varsNames)
@@ -168,7 +190,7 @@ public class VariableElimination {
     }
 
     private static void swap(Vector<CPT> factors, int i, int j)
-    {
+    { // a simple func to swap between 2 factors in the Factors Vector:
         LinkedHashMap<ArrayList<String>, Float> temp = factors.get(i).tableRows;
         LinkedList<String> temp_key = factors.get(i).varsNames;
         factors.get(i).varsNames = factors.get(j).varsNames;
@@ -180,11 +202,5 @@ public class VariableElimination {
     private static void removeFactor(Vector<CPT> factors)
     { // every factor with a size of 1 or less is being removed!
         factors.removeIf(factor -> factor.tableRows.size() < 2);
-    }
-
-    public static void main(String[] args) throws IOException {
-//        String q = "P(B=T|J=T,M=T) A-E";
-//        HashMap<String,Node> alarm = myXMLreader.XMLreader("alarm_net.xml");
-//        variable_elimination(q, alarm);
     }
 }

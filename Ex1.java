@@ -4,12 +4,14 @@ public class Ex1 {
     /**
      *  Main Class
      */
-    public static void main(String[] args) throws IOException {
-        String strFromUser = "input2.txt";
+    public static void main(String[] args) throws IOException
+    {
+        String strFromUser = "input.txt";
         BufferedWriter output = new BufferedWriter(new FileWriter("output.txt"));
         readTXT(strFromUser, output);
         output.close();
     }
+
     private static void readTXT(String strFromUser, BufferedWriter outputTXT)
     {
         try {
@@ -21,7 +23,6 @@ public class Ex1 {
                 throw new IllegalArgumentException(); // end the program
             }
 // since the name of each variable is unique, we can add each node to an hashmap of our graph nodes
-
             HashMap<String, Node> networkVars = myXMLreader.XMLreader(currLine);
             while ((currLine = txt.readLine()) != null) { // we should check if the query is valid
                 // after running the algo, reset color & visit of each node

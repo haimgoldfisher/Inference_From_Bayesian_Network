@@ -66,53 +66,6 @@ public class CPT {
         return allKeys;
     }
 
-    public void eliminate(String toEliminate, AtomicInteger additionOper) {
-        int eliminateCol = 0;
-        for (String name : this.varsNames) {
-            if (name.equals(toEliminate))
-                break;
-            eliminateCol++;
-        }
-        // merge rows that are the same expect of toEliminate
-        LinkedHashMap<ArrayList<String>, Float> resTable = new LinkedHashMap<ArrayList<String>, Float>();
-        resTable.putAll(this.tableRows);
-        //boolean same = true;
-        int i_index = 0;
-//  we will move twice one the same factor and will sum every same key to the res row
-        for (Map.Entry<ArrayList<String>, Float> i : this.tableRows.entrySet()) {
-            ArrayList<String> key_i = new ArrayList<String>();
-            key_i.addAll(i.getKey());
-            key_i.remove(eliminateCol);
-            int j_index = 0;
-            float x = i.getValue();
-            float y = 0;
-            for (Map.Entry<ArrayList<String>, Float> j : this.tableRows.entrySet()) {
-                ArrayList<String> key_j = new ArrayList<String>();
-                key_j.addAll(j.getKey());
-                key_j.remove(eliminateCol);
-// the index of key[j] & key[i] cannot be the same (it's the same value)
-// + we need to avoid the case of key[i] == key[j] & key[j] == key[i] (when i != j)
-                if (key_i.equals(key_j) && i_index > j_index) { // the keys equal, indexes are not!
-                    if (y == 0) {
-                        y = j.getValue(); // because every time we have a new j = new addition oper
-                        additionOper.addAndGet(1);
-                    }
-                    else { // y is bigger than 0:
-                        y += j.getValue();
-                    }
-                    resTable.remove(j.getKey()); // eliminate the other row
-                }
-                j_index++;
-            }
-        resTable.put(i.getKey(), x + y); // add the values of the same key
-        i_index++;
-        }
-        for (ArrayList<String> key : resTable.keySet())
-            key.remove(eliminateCol);
-        this.tableRows = resTable;
-        this.varsNames.remove(eliminateCol);
-    }
-
     /**
      * The purpose of this function is to eliminate the evidence variables from each factor that
      * contains them. After this elimination, the factor will remain with the rows which the
@@ -148,6 +101,83 @@ public class CPT {
         this.tableRows = resTable; // update the rows of the new factor
     }
 
+    /** The purpose of this function is to eliminate the desired hidden variable from the given factor.
+     *  The Algo:
+     * 1. Find the index of the desired variable -> **Col Index**.
+     * 2. Build a new factor.
+     * 3. Build an auxiliary factor (copy). for each key remove the outcome in **Col Index**.
+     * 4. Go over the structure twice:
+     *      4.1.Whenever the source key finds a key that is identical to it (when is SMALLER than
+     *          the index) - add the two values and raise the additionOper by one.
+     * 5. Add the new key to the new factor along with the sum of all the similar keys.
+     * 6. Update the given factor to the new factor
+     * @param toEliminate - the hidden variable which the algo needs to eliminate
+     * @param additionOper - addition operations performed so far - eliminate func will update them
+     */
+
+    public void eliminate(String toEliminate, AtomicInteger additionOper) {
+        int eliminateCol = 0;
+        for (String name : this.varsNames) {
+            if (name.equals(toEliminate))
+                break;
+            eliminateCol++;
+        }
+        // merge rows that are the same expect of toEliminate
+        LinkedHashMap<ArrayList<String>, Float> resTable = new LinkedHashMap<ArrayList<String>, Float>();
+        resTable.putAll(this.tableRows);
+        //boolean same = true;
+        int i_index = 0;
+//  we will move twice one the same factor and will sum every same key to the res row
+        for (Map.Entry<ArrayList<String>, Float> i : this.tableRows.entrySet()) {
+            ArrayList<String> key_i = new ArrayList<String>();
+            key_i.addAll(i.getKey());
+            key_i.remove(eliminateCol);
+            int j_index = 0;
+            float x = i.getValue();
+            float y = 0;
+            for (Map.Entry<ArrayList<String>, Float> j : this.tableRows.entrySet()) {
+                ArrayList<String> key_j = new ArrayList<String>();
+                key_j.addAll(j.getKey());
+                key_j.remove(eliminateCol);
+// the index of key[j] & key[i] cannot be the same (it's the same value)
+// + we need to avoid the case of key[i] == key[j] & key[j] == key[i] (when i != j)
+                if (key_i.equals(key_j) && i_index > j_index) { // the keys equal, indexes are not!
+                    if (y == 0) {
+                        y = j.getValue(); // because every time we have a new j = new addition oper
+                        additionOper.addAndGet(1); // it actually happens once for each two vals
+                    }
+                    else { // y is bigger than 0:
+                        y += j.getValue();
+                    }
+                    resTable.remove(j.getKey()); // eliminate the other row
+                }
+                j_index++;
+            }
+        resTable.put(i.getKey(), x + y); // add the values of the same key
+        i_index++;
+        }
+        for (ArrayList<String> key : resTable.keySet())
+            key.remove(eliminateCol);
+        this.tableRows = resTable;
+        this.varsNames.remove(eliminateCol);
+    }
+
+    /** The purpose of this function is to get two factors (can have the same variables, can
+     *  have different variables) and merge them into a new factor that contains both.
+     *  The Algo:
+     *  1. Build a joint Node of the two factors variable (first = node, other = parents).
+     *  2. Build an appropriate key table, with all possible combinations of outcomes.
+     *  3. Go over each key, refer to each of the previous factors:
+     *     3.1 Access the appropriate value, using the appropriate key.
+     *     3.2 Absorb the desired value from each factor.
+     *  4. multiply the values as a value in their new key and raise the mulOper by one
+     * @ param this - the smaller factor (if they are equals - the order has no meaning)
+     * @param f the bigger factor (if they are equals - the order has no meaning)
+     * @param mulOper multiplication operations performed so far - join func will update them
+     * @param vars the network, we need it for the new factor building
+     * @param factors the factors vector, we need it for the former factors removing
+     * @return the merged factor with the correct values. the two former factors are being removed
+     */
     public CPT join(CPT f, AtomicInteger mulOper, HashMap<String, Node> vars, Vector<CPT> factors) // this = the smaller, f = the bigger
     {
         LinkedHashMap<ArrayList<String>, Float> resTable = new LinkedHashMap<ArrayList<String>, Float>();
@@ -167,7 +197,7 @@ public class CPT {
 
 
     private CPT joinWithEqual(CPT f, AtomicInteger mulOper, HashMap<String,Node> vars, Vector<CPT> factors)
-    {
+    { // join two factors when the bigger factor has the vars of the smaller
         LinkedHashMap<ArrayList<String>, Float> resTable = new LinkedHashMap<ArrayList<String>, Float>();
         LinkedList<String> resVars = new LinkedList<String>();
         resVars.addAll(f.varsNames);
@@ -187,7 +217,7 @@ public class CPT {
     }
 
     public CPT joinWithUnique(CPT f, AtomicInteger mulOper, HashMap<String,Node> vars, Vector<CPT> factors)
-    {
+    { // join two factors when every factor has unique factor(s) that the second hasn't
         LinkedHashMap<ArrayList<String>,Float> resTable = new LinkedHashMap<ArrayList<String>,Float>();
         LinkedList<String> resVars = new LinkedList<String>();
         Node merged = new Node(f.varsNames.get(0));
@@ -212,8 +242,8 @@ public class CPT {
 
     /**
      * the purpose of this inner function is to find the correct key from each former CPT,
-     * to save it as a float vat and then to multiply them by each other, in order to return
-     * a correct value to the given key
+     * to save it as a float value and then to multiply them by each other, in order to return
+     * the correct value to the given key
      * @param sub - the combination of outcome which we need to find a correct value to it
      * @param other - the second CPT which we operate the joining with it
      * @param mergedVars - the columns list of the merged factor
