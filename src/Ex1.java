@@ -6,7 +6,7 @@ public class Ex1 {
      */
     public static void main(String[] args) throws IOException
     {
-        String strFromUser = "src/input.txt";
+        String strFromUser = "examples/input.txt";
         BufferedWriter output = new BufferedWriter(new FileWriter("output.txt"));
         readTXT(strFromUser, output);
         output.close();
